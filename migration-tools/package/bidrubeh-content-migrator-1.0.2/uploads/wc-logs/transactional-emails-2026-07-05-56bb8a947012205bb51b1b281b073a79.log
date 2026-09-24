@@ -1,0 +1,1 @@
+2026-07-05T15:20:32+00:00 WARNING Email "admin_payment_gateway_enabled" failed to send: نمی‌توان تابع ایمیل را نمونه‌سازی کرد. CONTEXT: {"email_type":"admin_payment_gateway_enabled","status":"failed","recipient":"admin","Persian_Woocommerce_Zibal":null}

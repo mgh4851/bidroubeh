@@ -4,7 +4,7 @@ Theme URI: https://example.ir/bidrubeh
 Author: Bidrubeh IT
 Author URI: https://example.ir
 Description: پرتال رسمی شهرداری بیدروبه؛ راست‌چین و فارسی، الهام‌گرفته از ساختار shiraz.ir: خدمات الکترونیک، اطلاع‌رسانی، اخبار، مناطق و آمار شهر.
-  Version: 1.9.87
+  Version: 1.9.89
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: bidrubeh
@@ -243,6 +243,9 @@ a.bd-notice-row:hover .bd-notice-body strong{color:var(--bd-primary)}
 .content-grid{display:grid;grid-template-columns:1fr 2fr;gap:16px}
 .content-grid>.sidebar{order:-1}
 .content-grid>div{order:2;min-width:0}
+.bd-single-grid>.sidebar{grid-column:1;grid-row:1}
+.bd-single-grid .bd-single-main{grid-column:2;grid-row:1;min-width:0}
+.bd-single-grid .bd-single-comments{grid-column:2;grid-row:2;min-width:0}
 .bd-cat-list li{display:flex;justify-content:space-between;align-items:center}
 .bd-cat-list li a{color:var(--bd-ink);font-weight:700}
 .bd-cat-list li a:hover{color:var(--bd-primary)}
@@ -406,6 +409,12 @@ span.bd-related-thumb{background:linear-gradient(135deg,var(--bd-primary),#149a6
   .news-grid{grid-template-columns:repeat(2,1fr)}
   .bd-slide-img,.bd-slide-ph{height:260px}
   .two-col,.about,.content-grid,.footer-grid,.bd-about-grid{grid-template-columns:1fr}
+  .content-grid>div{order:1}
+  .content-grid>.sidebar{order:2}
+  .bd-single-grid>.sidebar,.bd-single-grid .bd-single-main,.bd-single-grid .bd-single-comments{grid-column:auto;grid-row:auto}
+  .bd-single-grid .bd-single-main{order:1}
+  .bd-single-grid>.sidebar{order:2}
+  .bd-single-grid .bd-single-comments{order:3}
   .bd-photo-grid{grid-template-columns:repeat(2,1fr)}
   .bd-photo-card-img,.bd-photo-ph{height:200px}
   .bd-timeline{grid-template-columns:1fr 1fr}

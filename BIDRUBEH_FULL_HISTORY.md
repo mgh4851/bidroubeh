@@ -565,4 +565,17 @@ Date: 2026-09-24 | Theme v1.9.26 | Local: http://localhost:8080 | Source: C:\Use
 - Version/BIDRUBEH_VER 1.9.86 → 1.9.87.
 - Verified live: 3× foot-ico + 6× foot-row served, style ver=1.9.87, php -l clean. ZIP 296304 bytes.
 
+## 109. Mobile: loop-card above categories v1.9.88
+- Root cause: desktop `.content-grid>.sidebar{order:-1}` put the sidebar (news categories) first in DOM order on mobile's single-column layout.
+- style.css @media(max-width:960px): `.content-grid>div{order:1}` + `.content-grid>.sidebar{order:2}` — loop-card (news details) stacks above sidebar on small screens; desktop RTL order unchanged.
+- Version/BIDRUBEH_VER 1.9.87 → 1.9.88.
+- Verified live: order rule served, php -l clean. ZIP 295044 bytes.
+
+## 110. Comments at bottom on mobile + Category rename v1.9.89
+- single.php: `comments_template()` moved out of `article.loop-card` into `.bd-single-comments` grid child (own row col 2 on desktop, ordered last on mobile).
+- style.css: `.bd-single-grid` explicit desktop placement; mobile orders main(1) → sidebar(2) → comments(3).
+- Category label: fallback `دسته‌بندی اخبار` → `دسته‌بندی`; live `widget_categories[2].title` renamed via script (widget stored in DB, not theme file).
+- Version/BIDRUBEH_VER 1.9.88 → 1.9.89.
+- Verified live: comments wrapper + order rule served, widget title دسته‌بندی, php -l clean. ZIP 295124 bytes.
+
 (End of file)
