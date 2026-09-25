@@ -1,5 +1,5 @@
 <?php
-define('BIDRUBEH_VER','1.9.89');
+define('BIDRUBEH_VER','1.9.111');
 add_action('customize_controls_enqueue_scripts',function(){
   wp_add_inline_script('customize-controls',"(function(){var fa='۰۱۲۳۴۵۶۷۸۹';function toFa(s){return String(s).replace(/[0-9]/g,function(d){return fa[d];});}document.addEventListener('input',function(e){var t=e.target;if(!t||!t.id||t.tagName!=='INPUT')return;if(/bd_(slider_count|slider_speed|notice_count|photo_count|logo_w|logo_h|slogan_w|slogan_h|bar\d+_pct)/.test(t.id){var p=null;try{p=t.selectionStart;}catch(_){}var v=toFa(t.value);if(v!==t.value){t.value=v;try{if(p!==null)t.setSelectionRange(p,p);}catch(_){}}}});})();");
 });
@@ -135,7 +135,12 @@ function bidrubeh_msg_fp(){
   $ua=isset($_SERVER['HTTP_USER_AGENT'])?substr($_SERVER['HTTP_USER_AGENT'],0,120):'';
   return 'g'.substr(md5($ip.'|'.$ua),0,16);
 }
+function bidrubeh_msg_device_token(){
+  $token=isset($_COOKIE['bd_cfp'])?strtolower((string)$_COOKIE['bd_cfp']):'';
+  return preg_match('/^[a-f0-9]{32}$/',$token)?$token:'';
+}
 function bidrubeh_norm_phone($raw){
+  if(!is_scalar($raw)) return '';
   $s=(string)$raw;
   $s=str_replace(['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹','٠','١','٢','٣','٤','٥','٦','٧','٨','٩'],['0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9'],$s);
   $s=preg_replace('/\D+/','',$s);
@@ -157,112 +162,180 @@ function bidrubeh_unread_by_phone($phone_norm){
 function bidrubeh_unread_by_ip($fp=null){
   global $wpdb;
   if($fp===null) $fp=bidrubeh_msg_fp();
-  if($fp==='') return ['count'=>0,'latest'=>null];
-  $ids=$wpdb->get_col($wpdb->prepare(
-    "SELECT DISTINCT p.ID FROM {$wpdb->posts} p INNER JOIN {$wpdb->postmeta} m1 ON p.ID=m1.post_id AND m1.meta_key='bd_fp' AND m1.meta_value=%s INNER JOIN {$wpdb->postmeta} m2 ON p.ID=m2.post_id AND m2.meta_key='bd_read' AND m2.meta_value='0' WHERE p.post_type='bidrubeh_msg' AND p.post_status='private' ORDER BY p.post_date DESC",
-    $fp
-  ));
+  $token=bidrubeh_msg_device_token();
+  if($fp===''&&$token==='') return ['count'=>0,'latest'=>null];
+  $sql="SELECT DISTINCT p.ID FROM {$wpdb->posts} p INNER JOIN {$wpdb->postmeta} m1 ON p.ID=m1.post_id AND ((m1.meta_key='bd_fp' AND m1.meta_value=%s)";
+  $values=[$fp];
+  if($token!==''){
+    $sql.=" OR (m1.meta_key='bd_device' AND m1.meta_value=%s)";
+    $values[]=$token;
+  }
+  $sql.=") INNER JOIN {$wpdb->postmeta} m2 ON p.ID=m2.post_id AND m2.meta_key='bd_read' AND m2.meta_value='0' WHERE p.post_type='bidrubeh_msg' AND p.post_status='private' ORDER BY p.post_date DESC";
+  $ids=$wpdb->get_col($wpdb->prepare($sql,$values));
   $latest=$ids?get_post((int)$ids[0]):null;
   return ['count'=>count($ids),'latest'=>$latest];
 }
-function bidrubeh_pending_msg($fp){
-  return null;
+function bidrubeh_contact_pending($phone_norm=''){
+  if($phone_norm!==''){
+    $by_phone=bidrubeh_unread_by_phone($phone_norm);
+    if($by_phone['count']>0) return array_merge($by_phone,['by'=>'phone']);
+  }
+  $by_device=bidrubeh_unread_by_ip();
+  return $by_device['count']>0?array_merge($by_device,['by'=>'device']):null;
 }
-function bidrubeh_contact_shortcode(){
-  $err=''; $v_name=''; $v_phone=''; $v_msg=''; $check=null;
-  if(isset($_POST['bd_contact_send'])&&isset($_POST['bd_contact_nonce'])&&wp_verify_nonce($_POST['bd_contact_nonce'],'bd_contact')){
-    $v_name=sanitize_text_field($_POST['bd_name']??'');
-    $v_phone=sanitize_text_field($_POST['bd_phone2']??'');
-    $v_msg=sanitize_textarea_field($_POST['bd_msg']??'');
-    $pn=bidrubeh_norm_phone($v_phone);
-    $page=(int)($_POST['bd_page']??0);
-    if($v_name===''){ $err='لطفاً نام خود را وارد کنید.'; }
-    elseif($v_phone===''){ $err='لطفاً شماره تلفن را وارد کنید.'; }
-    elseif($v_msg===''){ $err='لطفاً متن پیام را وارد کنید.'; }
-    elseif(strlen($pn)!==11||!preg_match('/^09\d{9}$/',$pn)){ $err='شماره تلفن باید دقیقاً ۱۱ رقم و با ۰۹ شروع شود (مثال: ۰۹۱۲۳۴۵۶۷۸۹).'; }
-    elseif(mb_strlen(trim($v_msg))<10){ $err='متن پیام باید حداقل ۱۰ کاراکتر باشد.'; }
+function bidrubeh_contact_release_locks(){
+  if(empty($GLOBALS['bd_contact_locks'])) return;
+  global $wpdb;
+  foreach(array_reverse($GLOBALS['bd_contact_locks']) as $key) $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)',$key));
+  unset($GLOBALS['bd_contact_locks']);
+}
+add_action('shutdown','bidrubeh_contact_release_locks');
+function bidrubeh_contact_acquire_locks($phone_norm){
+  global $wpdb;
+  $device=bidrubeh_msg_device_token();
+  $keys=[
+    'bd_msg_p_'.substr(hash('sha256',$phone_norm),0,40),
+    'bd_msg_f_'.substr(hash('sha256',bidrubeh_msg_fp()),0,40),
+  ];
+  if($device!=='') $keys[]='bd_msg_d_'.substr(hash('sha256',$device),0,40);
+  sort($keys,SORT_STRING);
+  foreach($keys as $key){
+    if((string)$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, %d)',$key,5))!=='1'){
+      bidrubeh_contact_release_locks();
+      return false;
+    }
+    $GLOBALS['bd_contact_locks'][]=$key;
+  }
+  return true;
+}
+function bidrubeh_contact_post_string($key){
+  $value=$_POST[$key]??'';
+  return is_scalar($value)?(string)wp_unslash($value):'';
+}
+add_action('template_redirect',function(){
+  if(!isset($_POST['bd_contact_send'])) return;
+  $state=['name'=>'','phone'=>'','message'=>'','error'=>'','field'=>'','check'=>null];
+  $state['name']=sanitize_text_field(bidrubeh_contact_post_string('bd_name'));
+  $state['phone']=sanitize_text_field(bidrubeh_contact_post_string('bd_phone2'));
+  $state['message']=sanitize_textarea_field(bidrubeh_contact_post_string('bd_msg'));
+  $nonce=sanitize_text_field(bidrubeh_contact_post_string('bd_contact_nonce'));
+  $pn=bidrubeh_norm_phone($state['phone']);
+  if(!wp_verify_nonce($nonce,'bd_contact')) $state['error']='اعتبار فرم به پایان رسیده است. صفحه را تازه‌سازی کنید و دوباره تلاش کنید.';
+  elseif($pending=bidrubeh_contact_pending($pn)) $state['check']=$pending;
+  elseif(trim($state['name'])===''){ $state['error']='لطفاً نام و نام خانوادگی خود را وارد کنید.'; $state['field']='bdName'; }
+  elseif(trim($state['phone'])===''){ $state['error']='لطفاً شماره موبایل خود را وارد کنید.'; $state['field']='bdPhone'; }
+  elseif(!preg_match('/^09\d{9}$/',$pn)){ $state['error']='شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود.'; $state['field']='bdPhone'; }
+  elseif(trim($state['message'])===''){ $state['error']='لطفاً متن پیام را وارد کنید.'; $state['field']='bdMsg'; }
+  elseif(mb_strlen(trim($state['message']))<10){ $state['error']='متن پیام باید حداقل ۱۰ کاراکتر باشد.'; $state['field']='bdMsg'; }
+  elseif(!bidrubeh_contact_acquire_locks($pn)) $state['error']='درخواست دیگری در حال ثبت است. چند لحظه بعد دوباره تلاش کنید.';
+  elseif($pending=bidrubeh_contact_pending($pn)) $state['check']=$pending;
+  else{
+    $name=$state['name']; $phone=$state['phone']; $message=$state['message'];
+    $content="نام: $name\nتلفن: $phone\n\n$message";
+    $id=wp_insert_post([
+      'post_type'=>'bidrubeh_msg','post_title'=>$name.' — '.wp_date('Y/m/d H:i'),
+      'post_content'=>$content,'post_status'=>'private',
+      'meta_input'=>['bd_fp'=>bidrubeh_msg_fp(),'bd_device'=>bidrubeh_msg_device_token(),'bd_read'=>'0','bd_phone'=>$phone,'bd_phone_norm'=>$pn],
+    ],true);
+    if(is_wp_error($id)||!$id) $state['error']='پیام ذخیره نشد. لطفاً دوباره تلاش کنید.';
     else{
-      $st=bidrubeh_unread_by_phone($pn);
-      if($st['count']>0){
-        $check=array_merge($st,['by'=>'phone']);
-        $err='';
-      }
-      else{
-        $ipst=bidrubeh_unread_by_ip();
-        if($ipst['count']>0){
-          $check=array_merge($ipst,['by'=>'ip']);
-          $err='';
-        }
-        else{
-          $to=get_option('admin_email');
-          wp_mail($to,'پیام تماس با ما: '.$v_name,"نام: $v_name\nتلفن: $v_phone\n\n$v_msg");
-          $id=wp_insert_post(['post_type'=>'bidrubeh_msg','post_title'=>$v_name.' — '.wp_date('Y/m/d H:i'),'post_content'=>"نام: $v_name\nتلفن: $v_phone\n\n$v_msg",'post_status'=>'private']);
-          if($id&&!is_wp_error($id)){ update_post_meta($id,'bd_fp',bidrubeh_msg_fp()); update_post_meta($id,'bd_read',0); update_post_meta($id,'bd_phone',$v_phone); update_post_meta($id,'bd_phone_norm',$pn); }
-          $url=$page?get_permalink($page):home_url('/contact-us/');
-          wp_safe_redirect(add_query_arg('bd_sent','1',$url)); exit;
-        }
-      }
+      $to=get_option('admin_email');
+      if(is_email($to)) wp_mail($to,'پیام تماس با ما: '.$name,$content);
+      bidrubeh_contact_release_locks();
+      $url=get_permalink(get_queried_object_id());
+      if(!$url) $url=home_url('/contact-us/');
+      wp_safe_redirect(add_query_arg('bd_sent','1',$url));
+      exit;
     }
   }
-  $sent=isset($_GET['bd_sent']);
-  if(!$check){
-    $ipst2=bidrubeh_unread_by_ip();
-    if($ipst2['count']>0) $check=array_merge($ipst2,['by'=>'ip']);
-  }
-  $show_sent=$sent && $check;
+  bidrubeh_contact_release_locks();
+  $GLOBALS['bd_contact_state']=$state;
+});
+function bidrubeh_contact_shortcode(){
+  $state=$GLOBALS['bd_contact_state']??['name'=>'','phone'=>'','message'=>'','error'=>'','field'=>'','check'=>null];
+  $check=$state['check']?:bidrubeh_contact_pending();
+  $show_sent=isset($_GET['bd_sent'])&&$check;
   ob_start();
-  if($show_sent) echo '<div class="bd-sent-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg><div><strong>پیام شما با موفقیت ثبت شد.</strong><small>تا خوانده شدن پیام توسط مدیر، با همین شماره امکان ارسال مجدد نیست.</small></div></div>';
-  if($err!=='') echo '<div class="bd-form-err">'.esc_html($err).'</div>';
+  if($show_sent) echo '<div class="bd-sent-ok" role="status"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg><div><strong>پیام شما ثبت شد.</strong><small>پس از خوانده شدن پیام توسط مدیر، امکان ارسال پیام تازه دارید.</small></div></div>';
+  if($state['error']!=='') echo '<div class="bd-form-err" role="alert"><span class="bd-form-err-icon" aria-hidden="true">!</span><span>'.esc_html($state['error']).'</span></div>';
   if($check){
     $n=(int)$check['count'];
-    $dt=$check['latest']?bidrubeh_fa_digits(get_the_date('', $check['latest'])):'';
-    $by=$check['by']??'phone';
-    $msg=$by==='ip'?sprintf('این دستگاه %s پیام خوانده‌نشده دارد.',bidrubeh_fa_digits($n)):sprintf('این شماره تلفن %s پیام خوانده‌نشده دارد.',bidrubeh_fa_digits($n));
-    $hint=$by==='ip'?'آخرین پیام از این دستگاه در '.esc_html($dt).' ثبت شده و هنوز توسط مدیر خوانده نشده است. پس از خوانده شدن می‌توانید دوباره پیام بفرستید.':'آخرین پیام در '.esc_html($dt).' ثبت شده و هنوز توسط مدیر خوانده نشده است. پس از خوانده شدن، با همین شماره می‌توانید دوباره پیام بفرستید.';
-    echo '<div class="bd-lock-box"><span class="bd-lock-ico">⏳</span><div><strong>'.esc_html($msg).'</strong><small>'.esc_html($hint).'</small></div></div>';
-    echo '<button class="bd-send-btn" type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>منتظر خوانده شدن پیام قبلی…</span></button>';
+    $by=$check['by']??'device';
+    $msg=$by==='phone'?sprintf('این شماره تلفن %s پیام خوانده‌نشده دارد.',bidrubeh_fa_digits($n)):sprintf('از این سیستم %s پیام خوانده‌نشده ثبت شده است.',bidrubeh_fa_digits($n));
+    echo '<div class="bd-lock-box" role="status"><span class="bd-lock-ico" aria-hidden="true">⏳</span><div><strong>'.esc_html($msg).'</strong><small>تا زمان خوانده شدن پیام قبلی توسط مدیر، ارسال پیام تازه ممکن نیست.</small></div></div>';
   } else {
   ?>
-  <?php $bd_ip0=bidrubeh_unread_by_ip(); if($bd_ip0['count']>0){ echo '<div class="bd-lock-box"><span class="bd-lock-ico">⏳</span><div><strong>'.esc_html(sprintf('این دستگاه %s پیام خوانده‌نشده دارد.',bidrubeh_fa_digits($bd_ip0['count']))).'</strong><small>تا خوانده شدن پیام قبلی توسط مدیر امکان ارسال نیست.</small></div></div>'; } ?>
   <form class="bd-contact-form" method="post" action="" id="bdContactForm">
     <?php wp_nonce_field('bd_contact','bd_contact_nonce'); ?>
-    <input type="hidden" name="bd_page" value="<?php echo (int)get_the_ID(); ?>">
-    <p><label>نام و نام خانوادگی *</label><input type="text" name="bd_name" id="bdName" required value="<?php echo esc_attr($v_name); ?>"<?php echo $bd_ip0['count']>0?' disabled':''; ?>></p>
-    <p><label>تلفن تماس (موبایل) *</label><input type="tel" name="bd_phone2" id="bdPhone" required inputmode="numeric" maxlength="11" placeholder="۰۹۱۲۳۴۵۶۷۸۹" value="<?php echo esc_attr($v_phone); ?>"<?php echo $bd_ip0['count']>0?' disabled':''; ?>><small class="bd-phone-status" id="bdPhoneStatus"></small></p>
-    <p class="full"><label>متن پیام *</label><textarea name="bd_msg" id="bdMsg" rows="5" required minlength="10"<?php echo $bd_ip0['count']>0?' disabled':''; ?>><?php echo esc_textarea($v_msg); ?></textarea></p>
-    <p class="full"><button class="bd-send-btn" type="submit" name="bd_contact_send" id="bdSendBtn"<?php echo $bd_ip0['count']>0?' disabled':''; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>ارسال پیام</span></button></p>
+    <input type="hidden" name="bd_contact_send" value="1">
+    <p><label for="bdName">نام و نام خانوادگی *</label><input type="text" name="bd_name" id="bdName" required value="<?php echo esc_attr($state['name']); ?>"<?php echo $state['field']==='bdName'?' aria-invalid="true"':''; ?>><small class="bd-field-error" id="bdName-error"<?php echo $state['field']==='bdName'?'':' hidden'; ?>><?php echo $state['field']==='bdName'?esc_html($state['error']):''; ?></small></p>
+    <p><label for="bdPhone">تلفن تماس (موبایل) *</label><input type="tel" name="bd_phone2" id="bdPhone" required inputmode="tel" maxlength="18" placeholder="۰۹۱۲۳۴۵۶۷۸۹" value="<?php echo esc_attr(bidrubeh_fa_digits($state['phone'])); ?>"<?php echo $state['field']==='bdPhone'?' aria-invalid="true"':''; ?>><small class="bd-field-error" id="bdPhone-error"<?php echo $state['field']==='bdPhone'?'':' hidden'; ?>><?php echo $state['field']==='bdPhone'?esc_html($state['error']):''; ?></small><small class="bd-phone-status" id="bdPhoneStatus" role="status" aria-live="polite"></small></p>
+    <p class="full"><label for="bdMsg">متن پیام *</label><textarea name="bd_msg" id="bdMsg" rows="5" required minlength="10"<?php echo $state['field']==='bdMsg'?' aria-invalid="true"':''; ?>><?php echo esc_textarea($state['message']); ?></textarea><small class="bd-field-error" id="bdMsg-error"<?php echo $state['field']==='bdMsg'?'':' hidden'; ?>><?php echo $state['field']==='bdMsg'?esc_html($state['error']):''; ?></small></p>
+    <p class="full"><button class="bd-send-btn" type="submit" id="bdSendBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>ارسال پیام</span></button></p>
   </form>
   <script>
   (function(){
-    var nm=document.getElementById('bdName'),mg=document.getElementById('bdMsg'),tx=document.getElementById('bdPhone');
-    function faMsg(el,empty,short,long){
-      if(!el) return;
-      el.addEventListener('invalid',function(){
-        if(el.validity.valueMissing) el.setCustomValidity(empty);
-        else if(el.validity.tooShort) el.setCustomValidity(short);
-        else if(el.validity.patternMismatch||el.validity.typeMismatch) el.setCustomValidity(long);
-        else el.setCustomValidity('');
+    var form=document.getElementById('bdContactForm');
+    if(!form) return;
+    form.noValidate=true;
+    var phone=document.getElementById('bdPhone'),status=document.getElementById('bdPhoneStatus'),button=document.getElementById('bdSendBtn');
+    var timer,request=0,blocked=false;
+    var summary=document.createElement('div');
+    summary.className='bd-contact-error-summary';summary.setAttribute('role','alert');summary.hidden=true;
+    form.insertBefore(summary,form.firstChild);
+    function normalize(value){
+      var digits=String(value).replace(/[۰-۹٠-٩]/g,function(d){return String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)>-1?'۰۱۲۳۴۵۶۷۸۹'.indexOf(d):'٠١٢٣٤٥٦٧٨٩'.indexOf(d));}).replace(/\D/g,'');
+      if(digits.indexOf('0098')===0) digits='0'+digits.slice(4);
+      else if(digits.indexOf('98')===0&&digits.length===12) digits='0'+digits.slice(2);
+      else if(digits.length===10&&digits[0]==='9') digits='0'+digits;
+      return digits;
+    }
+    function errorFor(el){
+      var value=el.value.trim();
+      if(!value) return el.id==='bdName'?'لطفاً نام و نام خانوادگی خود را وارد کنید.':el.id==='bdPhone'?'لطفاً شماره موبایل خود را وارد کنید.':'لطفاً متن پیام را وارد کنید.';
+      if(el.id==='bdPhone'&&!/^09\d{9}$/.test(normalize(value))) return 'شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود.';
+      if(el.id==='bdMsg'&&Array.from(value).length<10) return 'متن پیام باید حداقل ۱۰ کاراکتر باشد.';
+      return '';
+    }
+    function showError(el,message){
+      var node=document.getElementById(el.id+'-error');
+      node.textContent=message;node.hidden=!message;
+      if(message){el.setAttribute('aria-invalid','true');el.setAttribute('aria-describedby',node.id);}
+      else{el.removeAttribute('aria-invalid');el.removeAttribute('aria-describedby');}
+    }
+    ['bdName','bdPhone','bdMsg'].forEach(function(id){
+      var el=document.getElementById(id);
+      el.addEventListener('input',function(){if(el.getAttribute('aria-invalid')==='true') showError(el,errorFor(el));if(!form.querySelector('[aria-invalid="true"]')) summary.hidden=true;});
+    });
+    function checkPhone(){
+      var current=++request;
+      if(!/^09\d{9}$/.test(normalize(phone.value))){status.textContent='';status.className='bd-phone-status';blocked=false;button.disabled=false;return;}
+      status.textContent='در حال بررسی شماره…';status.className='bd-phone-status checking';
+      fetch('<?php echo esc_url(admin_url('admin-ajax.php')); ?>?action=bidrubeh_check_phone&phone='+encodeURIComponent(phone.value))
+        .then(function(response){if(!response.ok) throw new Error('network');return response.json();})
+        .then(function(data){
+          if(current!==request) return;
+          blocked=!!(data&&data.count>0);
+          if(blocked){status.textContent=data.by==='phone'?'این شماره پیام خوانده‌نشده دارد؛ پس از خوانده شدن آن می‌توانید پیام تازه بفرستید.':'از این سیستم پیام خوانده‌نشده ثبت شده است؛ پس از خوانده شدن آن می‌توانید پیام تازه بفرستید.';status.className='bd-phone-status blocked';}
+          else{status.textContent='این شماره پیام خوانده‌نشده‌ای ندارد.';status.className='bd-phone-status ok';}
+          button.disabled=blocked;
+        }).catch(function(){if(current===request){status.textContent='بررسی خودکار در دسترس نیست؛ هنگام ارسال بررسی می‌شود.';status.className='bd-phone-status checking';blocked=false;button.disabled=false;}});
+    }
+    phone.addEventListener('input',function(){
+      var cursor=phone.selectionStart;
+      var shown=phone.value.replace(/[0-9٠-٩]/g,function(d){
+        var digit=/[0-9]/.test(d)?Number(d):'٠١٢٣٤٥٦٧٨٩'.indexOf(d);
+        return '۰۱۲۳۴۵۶۷۸۹'[digit];
       });
-      el.addEventListener('input',function(){el.setCustomValidity('');});
-    }
-    faMsg(nm,'لطفاً نام خود را وارد کنید.','','');
-    faMsg(tx,'لطفاً شماره تلفن را وارد کنید.','','لطفاً یک شماره موبایل ۱۱ رقمی معتبر وارد کنید (۰۹…).');
-    faMsg(mg,'لطفاً متن پیام را وارد کنید.','متن پیام باید حداقل ۱۰ کاراکتر باشد.','');
-    var ph=document.getElementById('bdPhone'),st=document.getElementById('bdPhoneStatus'),btn=document.getElementById('bdSendBtn'),t=null;
-    if(!ph) return;
-    function fa(s){return String(s).replace(/[0-9]/g,function(d){return '۰۱۲۳۴۵۶۷۸۹'[d];});}
-    function check(){
-      var v=ph.value.replace(/[^۰-۹٠-٩0-9]/g,'');
-      if(v.replace(/[^0-9۰-۹٠-٩]/g,'').length<4){st.textContent='';st.className='bd-phone-status';if(btn)btn.disabled=false;return;}
-      st.textContent='در حال بررسی…';st.className='bd-phone-status checking';
-      fetch('<?php echo esc_url(admin_url('admin-ajax.php')); ?>?action=bidrubeh_check_phone&phone='+encodeURIComponent(ph.value))
-        .then(function(r){return r.json();}).then(function(d){
-          if(d&&d.count>0&&(d.by==='ip')){st.textContent='⚠ این دستگاه '+fa(d.count)+' پیام خوانده‌نشده دارد — تا خوانده شدن توسط مدیر امکان ارسال نیست.';st.className='bd-phone-status blocked';if(btn)btn.disabled=true;}
-          else if(d&&d.count>0){st.textContent='⚠ این شماره '+fa(d.count)+' پیام خوانده‌نشده دارد — تا خوانده شدن توسط مدیر امکان ارسال نیست.';st.className='bd-phone-status blocked';if(btn)btn.disabled=true;}
-          else{st.textContent='✓ این شماره پیام خوانده‌نشده‌ای ندارد.';st.className='bd-phone-status ok';if(btn)btn.disabled=false;}
-        }).catch(function(){st.textContent='';});
-    }
-    ph.addEventListener('input',function(){clearTimeout(t);t=setTimeout(check,600);});
+      if(shown!==phone.value){phone.value=shown;if(cursor!==null) phone.setSelectionRange(cursor,cursor);}
+      clearTimeout(timer);request++;timer=setTimeout(checkPhone,450);
+    });
+    form.addEventListener('submit',function(event){
+      var first=null;
+      ['bdName','bdPhone','bdMsg'].forEach(function(id){var el=document.getElementById(id),error=errorFor(el);showError(el,error);if(error&&!first) first=el;});
+      if(first||blocked){event.preventDefault();summary.textContent=blocked?'این شماره یا سیستم پیام خوانده‌نشده دارد.':'لطفاً موارد مشخص‌شده را اصلاح کنید.';summary.hidden=false;if(first) first.focus();}
+      else button.disabled=true;
+    });
   })();
   </script>
   <?php
@@ -342,21 +415,9 @@ function bidrubeh_comment_fp(){
   $ua=isset($_SERVER['HTTP_USER_AGENT'])?substr($_SERVER['HTTP_USER_AGENT'],0,120):'';
   return 'g'.$tok.'|'.substr(md5($ip.'|'.$ua),0,12);
 }
-function bidrubeh_comment_ip(){
-  return isset($_SERVER['REMOTE_ADDR'])?(string)$_SERVER['REMOTE_ADDR']:'0';
-}
-function bidrubeh_comment_ip_blocked($post_id=null){
-  if(current_user_can('moderate_comments')) return false;
-  $post_id=$post_id?(int)$post_id:(int)get_the_ID();
-  if(!$post_id) return false;
-  $ip=bidrubeh_comment_ip();
-  if($ip===''||$ip==='0') return false;
-  global $wpdb;
-  $n=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_post_ID=%d AND comment_author_IP=%s AND comment_approved='0'",$post_id,$ip));
-  return $n>0;
-}
 add_action('init',function(){
-  if(!is_user_logged_in()&&empty($_COOKIE['bd_cfp'])){
+  $tok=isset($_COOKIE['bd_cfp'])?preg_replace('/[^a-f0-9]/','',strtolower((string)$_COOKIE['bd_cfp'])):'';
+  if(!is_user_logged_in()&&strlen($tok)!==32){
     $t=bin2hex(random_bytes(16));
     setcookie('bd_cfp',$t,time()+YEAR_IN_SECONDS,COOKIEPATH,COOKIE_DOMAIN,is_ssl(),true);
     $_COOKIE['bd_cfp']=$t;
@@ -364,41 +425,106 @@ add_action('init',function(){
 },1);
 function bidrubeh_comment_blocked($post_id=null){
   if(current_user_can('moderate_comments')) return false;
-  $post_id=$post_id?(int)$post_id:(int)get_the_ID();
-  if(!$post_id) return false;
-  if(bidrubeh_comment_ip_blocked($post_id)) return true;
-  $n=get_comments(['post_id'=>$post_id,'meta_key'=>'bd_fp','meta_value'=>bidrubeh_comment_fp(),'status'=>'hold','count'=>true,'bd_lock_check'=>true]);
-  return $n>0;
+  global $wpdb;
+  $fp=bidrubeh_comment_fp();
+  $tok=isset($_COOKIE['bd_cfp'])?preg_replace('/[^a-f0-9]/','',strtolower((string)$_COOKIE['bd_cfp'])):'';
+  $like=strlen($tok)===32?$wpdb->esc_like('g'.$tok.'|').'%':$fp;
+  $ip=isset($_SERVER['REMOTE_ADDR'])?(string)$_SERVER['REMOTE_ADDR']:'';
+  $ua=isset($_SERVER['HTTP_USER_AGENT'])?substr((string)$_SERVER['HTTP_USER_AGENT'],0,120):'';
+  $network_match=$ip!==''&&$ip!=='0'&&$ua!=='';
+  $sql="SELECT 1 FROM {$wpdb->comments} c WHERE c.comment_approved='0' AND c.comment_type IN ('','comment') AND (EXISTS (SELECT 1 FROM {$wpdb->commentmeta} m WHERE m.comment_id=c.comment_ID AND m.meta_key='bd_fp' AND (m.meta_value=%s OR m.meta_value LIKE %s))";
+  $values=[$fp,$like];
+  if($network_match){
+    $sql.=' OR (c.comment_author_IP=%s AND LEFT(c.comment_agent,120)=%s)';
+    $values[]=$ip;
+    $values[]=$ua;
+  }
+  $sql.=') LIMIT 1';
+  return (bool)$wpdb->get_var($wpdb->prepare($sql,$values));
 }
-add_action('comment_post',function($cid){ update_comment_meta($cid,'bd_fp',bidrubeh_comment_fp()); });
+function bidrubeh_comment_release_lock(){
+  if(empty($GLOBALS['bd_comment_sql_lock'])) return;
+  global $wpdb;
+  $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)',$GLOBALS['bd_comment_sql_lock']));
+  unset($GLOBALS['bd_comment_sql_lock']);
+}
+add_action('shutdown','bidrubeh_comment_release_lock');
+add_action('wp_insert_comment',function($cid){
+  update_comment_meta($cid,'bd_fp',bidrubeh_comment_fp());
+  bidrubeh_comment_release_lock();
+});
 add_filter('pre_comment_approved',function($approved,$commentdata){
   if(!empty($commentdata['user_ID'])&&user_can((int)$commentdata['user_ID'],'moderate_comments')) return $approved;
   return '0';
 },10,2);
+function bidrubeh_comment_guard(){
+  if(current_user_can('moderate_comments')) return true;
+  global $wpdb;
+  $ip=isset($_SERVER['REMOTE_ADDR'])?(string)$_SERVER['REMOTE_ADDR']:'';
+  $ua=isset($_SERVER['HTTP_USER_AGENT'])?substr((string)$_SERVER['HTTP_USER_AGENT'],0,120):'';
+  $identity=$ip!==''&&$ua!==''?$ip.'|'.$ua:bidrubeh_comment_fp();
+  $key='bd_comment_'.substr(hash('sha256',$identity),0,40);
+  if((string)$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, %d)',$key,5))!=='1'){
+    return new WP_Error('bidrubeh_comment_busy','ثبت دیدگاه قبلی هنوز در حال انجام است. چند لحظه دیگر دوباره تلاش کنید.',['status'=>429]);
+  }
+  $GLOBALS['bd_comment_sql_lock']=$key;
+  if(bidrubeh_comment_blocked()) return new WP_Error('bidrubeh_comment_pending','دیدگاه قبلی این سیستم هنوز در انتظار بررسی مدیر است. پس از تأیید یا رد آن می‌توانید دیدگاه جدید ثبت کنید.',['status'=>409]);
+  return true;
+}
 add_filter('preprocess_comment',function($data){
+  $guard=bidrubeh_comment_guard();
+  if(is_wp_error($guard)) wp_die($guard->get_error_message(),'دیدگاه ثبت نشد',['response'=>$guard->get_error_data()['status']]);
   if(empty($data['user_ID'])){
     if(trim($data['comment_author']??'')===''){
-      wp_die(__('لطفاً نام خود را وارد کنید.','bidrubeh'),__('نام الزامی است','bidrubeh'),['response'=>403,'back_link'=>true]);
+      wp_die(__('لطفاً نام خود را وارد کنید.','bidrubeh'),__('نام الزامی است','bidrubeh'),['response'=>422]);
     }
     $em=trim($data['comment_author_email']??'');
     if($em===''){
-      wp_die(__('لطفاً ایمیل خود را وارد کنید.','bidrubeh'),__('ایمیل الزامی است','bidrubeh'),['response'=>403,'back_link'=>true]);
+      wp_die(__('لطفاً ایمیل خود را وارد کنید.','bidrubeh'),__('ایمیل الزامی است','bidrubeh'),['response'=>422]);
     }
     if(!is_email($em)){
-      wp_die(__('ایمیل وارد شده معتبر نیست.','bidrubeh'),__('ایمیل نامعتبر','bidrubeh'),['response'=>403,'back_link'=>true]);
+      wp_die(__('ایمیل وارد شده معتبر نیست.','bidrubeh'),__('ایمیل نامعتبر','bidrubeh'),['response'=>422]);
     }
   }
   $t=trim(wp_strip_all_tags($data['comment_content']??''));
   if(mb_strlen($t)<10){
-    wp_die(__('متن دیدگاه باید حداقل ۱۰ کاراکتر باشد.','bidrubeh'),__('متن کوتاه','bidrubeh'),['response'=>403,'back_link'=>true]);
-  }
-  if(current_user_can('moderate_comments')) return $data;
-  $pid=(int)$data['comment_post_ID'];
-  if(bidrubeh_comment_blocked($pid)){
-    wp_die(__('دیدگاه قبلی شما هنوز توسط مدیر تأیید نشده است. پس از تأیید یا حذف آن می‌توانید دیدگاه جدید ثبت کنید.','bidrubeh'),__('محدودیت ارسال دیدگاه','bidrubeh'),['response'=>403,'back_link'=>true]);
+    wp_die(__('متن دیدگاه باید حداقل ۱۰ کاراکتر باشد.','bidrubeh'),__('متن کوتاه','bidrubeh'),['response'=>422]);
   }
   return $data;
 });
+add_filter('rest_pre_insert_comment',function($prepared){
+  if(is_wp_error($prepared)) return $prepared;
+  $guard=bidrubeh_comment_guard();
+  if(is_wp_error($guard)) return $guard;
+  if(!current_user_can('moderate_comments')) $prepared['comment_approved']='0';
+  return $prepared;
+});
+add_filter('wp_die_handler',function($handler){
+  if(basename((string)($_SERVER['SCRIPT_NAME']??''))==='wp-comments-post.php') return 'bidrubeh_comment_die_handler';
+  return $handler;
+});
+function bidrubeh_comment_die_handler($message,$title='',$args=[]){
+  $args=wp_parse_args($args,['response'=>500,'exit'=>true]);
+  $status=(int)$args['response'];
+  if($status===500) $status=400;
+  if($status<400||$status>599) $status=400;
+  if($message instanceof WP_Error) $message=$message->get_error_message();
+  $message=trim(wp_strip_all_tags((string)$message));
+  $title=trim(wp_strip_all_tags((string)$title));
+  if($title==='') $title='ثبت دیدگاه انجام نشد';
+  if($message==='') $message='لطفاً دوباره تلاش کنید.';
+  $post_id=isset($_POST['comment_post_ID'])?absint($_POST['comment_post_ID']):0;
+  $back=$post_id&&get_post_status($post_id)?get_permalink($post_id).'#respond':home_url('/');
+  status_header($status);
+  http_response_code($status);
+  nocache_headers();
+  header('Content-Type: text/html; charset='.get_bloginfo('charset'));
+  ?>
+  <!doctype html><html lang="fa" dir="rtl"><head><meta charset="<?php echo esc_attr(get_bloginfo('charset')); ?>"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?php echo esc_html($title); ?> | <?php echo esc_html(get_bloginfo('name')); ?></title>
+  <style>*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#f4f6f0;color:#213b32;font:16px/1.9 Tahoma,Arial,sans-serif}.card{width:min(100%,520px);padding:clamp(24px,5vw,42px);border:1px solid #dbe6db;border-radius:22px;background:#fff;box-shadow:0 18px 55px rgba(19,62,48,.1)}.icon{display:grid;place-items:center;width:58px;height:58px;border-radius:18px;background:#fff3e7;color:#a66324;font-size:28px;font-weight:800}h1{margin:20px 0 8px;font-size:23px;line-height:1.5;color:#103f34}p{margin:0 0 24px;color:#52645b}.actions{display:flex;gap:10px;flex-wrap:wrap}a{display:inline-block;border-radius:11px;padding:9px 19px;font-weight:700;text-decoration:none}a.primary{background:#155d4a;color:#fff}a.secondary{background:#edf4ee;color:#155d4a}a:focus-visible{outline:3px solid #c88a45;outline-offset:3px}</style></head><body><main class="card" role="alert"><span class="icon" aria-hidden="true">!</span><h1><?php echo esc_html($title); ?></h1><p><?php echo esc_html($message); ?></p><div class="actions"><a class="primary" href="<?php echo esc_url($back); ?>">بازگشت به دیدگاه‌ها</a><a class="secondary" href="<?php echo esc_url(home_url('/')); ?>">صفحه اصلی</a></div></main></body></html>
+  <?php
+  if($args['exit']) exit;
+}
 add_filter('comment_reply_link',function($link){
   if(!current_user_can('moderate_comments')&&bidrubeh_comment_blocked()) return '';
   return $link;
@@ -417,6 +543,29 @@ add_action('pre_get_comments',function($q){
 function bidrubeh_fa_digits($s){
   return str_replace(['0','1','2','3','4','5','6','7','8','9'],['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'],(string)$s);
 }
+function bidrubeh_localize_text_digits($text){
+  return preg_replace_callback('/&#(?:[0-9]+|x[0-9a-fA-F]+);|[0-9]+/u',function($number){
+    $value=$number[0];
+    if(strncmp($value,'&#',2)!==0) return bidrubeh_fa_digits($value);
+    $code=strtolower($value[2]??'')==='x'?hexdec(substr($value,3,-1)):(int)substr($value,2,-1);
+    return $code>=48&&$code<=57?bidrubeh_fa_digits(chr($code)):$value;
+  },$text);
+}
+function bidrubeh_localize_visible_digits($html){
+  if($html==='') return $html;
+  return preg_replace_callback('~<!--.*?-->|<(?:script|style)\b[^>]*>.*?</(?:script|style)\s*>|<[^>]*>|[^<]+~is',function($part){
+    $text=$part[0];
+    if($text[0]!=='<') return bidrubeh_localize_text_digits($text);
+    if(preg_match('/^<(?:!--|script\b|style\b)/i',$text)) return $text;
+    return preg_replace_callback('/\b(alt|title|aria-label|placeholder)="([^"]*)"/i',function($attribute){
+      return $attribute[1].'="'.bidrubeh_localize_text_digits($attribute[2]).'"';
+    },$text);
+  },$html);
+}
+add_action('template_redirect',function(){
+  if(is_admin()||wp_doing_ajax()||is_feed()||is_robots()||is_trackback()||is_embed()||wp_is_json_request()||get_query_var('sitemap')||get_query_var('sitemap-stylesheet')) return;
+  ob_start('bidrubeh_localize_visible_digits');
+},20);
 function bidrubeh_g2j($gy,$gm,$gd){
   $g_d_m=[0,31,59,90,120,151,181,212,243,273,304,334];
   if($gy>1600){ $jy=979; $gy-=1600; } else { $jy=0; $gy-=621; }
@@ -516,10 +665,8 @@ add_action('customize_register',function($wp_customize){
   $wp_customize->add_control('bd_notice_cat',['label'=>__('دسته اطلاعیه‌ها (نامک)','bidrubeh'),'description'=>__('نامک دسته‌ای که اطلاعیه‌ها از آن خوانده می‌شود، مثلا etelaeieh','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text']);
   $wp_customize->add_setting('bd_notice_count',['default'=>5,'sanitize_callback'=>'bidrubeh_sanitize_num']);
   $wp_customize->add_control('bd_notice_count',['label'=>__('تعداد اطلاعیه‌ها','bidrubeh'),'description'=>__('عدد فارسی یا انگلیسی، مثلا ۵ یا 5','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text','input_attrs'=>['inputmode'=>'numeric','placeholder'=>'۵']]);
-  $wp_customize->add_setting('bd_slider_count',['default'=>5,'sanitize_callback'=>'bidrubeh_sanitize_num']);
-  $wp_customize->add_control('bd_slider_count',['label'=>__('تعداد اسلایدها','bidrubeh'),'description'=>__('عدد فارسی یا انگلیسی، مثلا ۵ یا 5','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text','input_attrs'=>['inputmode'=>'numeric','placeholder'=>'۵']]);
-  $wp_customize->add_setting('bd_slider_filter',['default'=>'','sanitize_callback'=>'sanitize_text_field']);
-  $wp_customize->add_control('bd_slider_filter',['label'=>__('فیلتر متن اسلایدر','bidrubeh'),'description'=>__('واژه‌ها با کاما جدا شود، مثلا آزمون,تست. خبرهایی که تیترشان این واژه‌ها را داشته باشد در اسلایدر نمایش داده نمی‌شود. خالی = بدون فیلتر.','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text']);
+  $wp_customize->add_setting('bd_office_hours',['default'=>'شنبه تا چهارشنبه، ۷:۳۰ تا ۱۴:۳۰','sanitize_callback'=>'sanitize_text_field']);
+  $wp_customize->add_control('bd_office_hours',['label'=>__('ساعات کاری','bidrubeh'),'description'=>__('از متن فعلی صفحه درباره ما گرفته شده است؛ در صورت تغییر برنامه، اینجا را به‌روزرسانی کنید.','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text']);
   $wp_customize->add_setting('bd_slider_speed',['default'=>5,'sanitize_callback'=>'bidrubeh_sanitize_num']);
   $wp_customize->add_control('bd_slider_speed',['label'=>__('سرعت اسلایدر (ثانیه)','bidrubeh'),'description'=>__('عدد فارسی یا انگلیسی، مثلا ۵ یا 5. صفر = توقف خودکار.','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text','input_attrs'=>['inputmode'=>'numeric','placeholder'=>'۵']]);
   $wp_customize->add_setting('bd_photo_cat',['default'=>'gozaresh-tasviri','sanitize_callback'=>'sanitize_text_field']);
@@ -541,12 +688,9 @@ add_action('customize_register',function($wp_customize){
     $wp_customize->add_setting($key,['default'=>'','sanitize_callback'=>'sanitize_text_field','transport'=>'refresh']);
     $wp_customize->add_control($key,['label'=>$label,'section'=>'bidrubeh_social','type'=>'text']);
   }
-  $wp_customize->add_section('bidrubeh_zones',['title'=>__('نواحی و محلات','bidrubeh'),'priority'=>32,'description'=>__('عنوان خالی = عدم نمایش آن ناحیه. هر تعداد که پر کنید در صفحه اصلی نمایش داده می‌شود.','bidrubeh')]);
+  $wp_customize->add_section('bidrubeh_zones',['title'=>__('نواحی و محلات','bidrubeh'),'priority'=>32,'description'=>__('نام و توضیح واقعی هر محله را ثبت کنید. عنوان خالی = عدم نمایش در صفحه درباره ما.','bidrubeh')]);
   $zone_defs=[
-    1=>['t'=>'ناحیه ۱ — مرکز شهر','d'=>'نشانی: خیابان اصلی، ساختمان شهرداری مرکزی | تلفن: 061-00000000'],
-    2=>['t'=>'ناحیه ۲ — محلات شرقی','d'=>'خدمات عمرانی، فضای سبز و جمع‌آوری پسماند'],
-    3=>['t'=>'ناحیه ۳ — محلات غربی','d'=>'بهسازی معابر، روشنایی و زیباسازی'],
-    4=>['t'=>'ناحیه ۴ — حاشیه و روستاهای الحاقی','d'=>'آبرسانی، راه روستایی و خدمات اجتماعی'],
+    1=>['t'=>'','d'=>''],2=>['t'=>'','d'=>''],3=>['t'=>'','d'=>''],4=>['t'=>'','d'=>''],
     5=>['t'=>'','d'=>''],6=>['t'=>'','d'=>''],7=>['t'=>'','d'=>''],8=>['t'=>'','d'=>''],
   ];
   foreach($zone_defs as $i=>$d){
@@ -578,10 +722,10 @@ add_action('customize_register',function($wp_customize){
   }
   $wp_customize->add_section('bidrubeh_faq',['title'=>__('سوالات متداول','bidrubeh'),'priority'=>34,'description'=>__('سوال خالی = عدم نمایش آن مورد. روی سوال در سایت کلیک کنید تا پاسخ باز شود.','bidrubeh')]);
   $faq_defs=[
-    1=>['q'=>'ساعات کاری شهرداری بیدروبه چیست؟','a'=>'شنبه تا چهارشنبه ۷:۳۰ تا ۱۴:۳۰. سامانه ۱۳۷ به‌صورت ۲۴ ساعته پاسخگوست.'],
-    2=>['q'=>'چگونه عوارض نوسازی را پرداخت کنم؟','a'=>'از طریق میز خدمت الکترونیک پرتال یا مراجعه حضوری به ساختمان شهرداری مرکزی.'],
-    3=>['q'=>'چگونه درخواست عمرانی ثبت کنم؟','a'=>'از صفحه «تماس با ما» فرم را تکمیل کنید؛ پس از خوانده شدن توسط مدیر می‌توانید دوباره پیام بفرستید.'],
-    4=>['q'=>'برنامه جمع‌آوری پسماند خشک چیست؟','a'=>'برنامه هفتگی در بخش اطلاعیه‌ها منتشر می‌شود؛ تفکیک مبدأ را رعایت کنید.'],
+    1=>['q'=>'ساعات کاری شهرداری بیدروبه چیست؟','a'=>'ساعات کاری تأییدشده در صفحه اصلی درج می‌شود. برای اطلاع بیشتر با شهرداری تماس بگیرید.'],
+    2=>['q'=>'چگونه با شهرداری ارتباط بگیرم؟','a'=>'از صفحه «تماس با ما» پیام بفرستید یا با شماره درج‌شده در سایت تماس بگیرید.'],
+    3=>['q'=>'چگونه درخواست شهری ثبت کنم؟','a'=>'از صفحه «تماس با ما» فرم را تکمیل کنید تا درخواست شما به شهرداری برسد.'],
+    4=>['q'=>'اطلاعیه‌های مهم را کجا ببینم؟','a'=>'جدیدترین اطلاعیه در صفحه اصلی نمایش داده می‌شود و بقیه در آرشیو اطلاعیه‌ها قابل مشاهده‌اند.'],
     5=>['q'=>'','a'=>''],6=>['q'=>'','a'=>''],7=>['q'=>'','a'=>''],8=>['q'=>'','a'=>''],9=>['q'=>'','a'=>''],10=>['q'=>'','a'=>''],
   ];
   foreach($faq_defs as $i=>$d){
@@ -667,10 +811,10 @@ function bidrubeh_footer_links(){
 }
 function bidrubeh_faqs(){
   $defs=[
-    1=>['q'=>'ساعات کاری شهرداری بیدروبه چیست؟','a'=>'شنبه تا چهارشنبه ۷:۳۰ تا ۱۴:۳۰. سامانه ۱۳۷ به‌صورت ۲۴ ساعته پاسخگوست.'],
-    2=>['q'=>'چگونه عوارض نوسازی را پرداخت کنم؟','a'=>'از طریق میز خدمت الکترونیک پرتال یا مراجعه حضوری به ساختمان شهرداری مرکزی.'],
-    3=>['q'=>'چگونه درخواست عمرانی ثبت کنم؟','a'=>'از صفحه «تماس با ما» فرم را تکمیل کنید؛ پس از خوانده شدن توسط مدیر می‌توانید دوباره پیام بفرستید.'],
-    4=>['q'=>'برنامه جمع‌آوری پسماند خشک چیست؟','a'=>'برنامه هفتگی در بخش اطلاعیه‌ها منتشر می‌شود؛ تفکیک مبدأ را رعایت کنید.'],
+    1=>['q'=>'ساعات کاری شهرداری بیدروبه چیست؟','a'=>'ساعات کاری تأییدشده در صفحه اصلی درج می‌شود. برای اطلاع بیشتر با شهرداری تماس بگیرید.'],
+    2=>['q'=>'چگونه با شهرداری ارتباط بگیرم؟','a'=>'از صفحه «تماس با ما» پیام بفرستید یا با شماره درج‌شده در سایت تماس بگیرید.'],
+    3=>['q'=>'چگونه درخواست شهری ثبت کنم؟','a'=>'از صفحه «تماس با ما» فرم را تکمیل کنید تا درخواست شما به شهرداری برسد.'],
+    4=>['q'=>'اطلاعیه‌های مهم را کجا ببینم؟','a'=>'جدیدترین اطلاعیه در صفحه اصلی نمایش داده می‌شود و بقیه در آرشیو اطلاعیه‌ها قابل مشاهده‌اند.'],
     5=>['q'=>'','a'=>''],6=>['q'=>'','a'=>''],7=>['q'=>'','a'=>''],8=>['q'=>'','a'=>''],9=>['q'=>'','a'=>''],10=>['q'=>'','a'=>''],
   ];
   $out=[];
@@ -695,10 +839,7 @@ function bidrubeh_bars(){
 }
 function bidrubeh_zones(){
   $defs=[
-    1=>['t'=>'ناحیه ۱ — مرکز شهر','d'=>'نشانی: خیابان اصلی، ساختمان شهرداری مرکزی | تلفن: 061-00000000'],
-    2=>['t'=>'ناحیه ۲ — محلات شرقی','d'=>'خدمات عمرانی، فضای سبز و جمع‌آوری پسماند'],
-    3=>['t'=>'ناحیه ۳ — محلات غربی','d'=>'بهسازی معابر، روشنایی و زیباسازی'],
-    4=>['t'=>'ناحیه ۴ — حاشیه و روستاهای الحاقی','d'=>'آبرسانی، راه روستایی و خدمات اجتماعی'],
+    1=>['t'=>'','d'=>''],2=>['t'=>'','d'=>''],3=>['t'=>'','d'=>''],4=>['t'=>'','d'=>''],
     5=>['t'=>'','d'=>''],6=>['t'=>'','d'=>''],7=>['t'=>'','d'=>''],8=>['t'=>'','d'=>''],
   ];
   $out=[];
@@ -706,7 +847,6 @@ function bidrubeh_zones(){
     $t=trim((string)get_theme_mod('bd_zone'.$i.'_title',$d['t']));
     $desc=trim((string)get_theme_mod('bd_zone'.$i.'_desc',$d['d']));
     if($t==='') continue;
-    $desc=str_replace('061-00000000',(string)get_theme_mod('bd_phone','061-00000000'),$desc);
     $out[]=['t'=>$t,'d'=>$desc];
   }
   return $out;
@@ -777,8 +917,9 @@ function bidrubeh_news_count(){
   return bidrubeh_fa_digits(isset($c->publish)?(int)$c->publish:0);
 }
 add_filter('wp_list_categories',function($html){
-  return preg_replace_callback('/\((\d+)\)/',function($m){
-    return '('.bidrubeh_fa_digits($m[1]).')';
+  return preg_replace_callback('~</a>\s*\(([0-9]+)\)~u',function($m){
+    $count=bidrubeh_fa_digits($m[1]);
+    return '</a><span class="bd-cat-count" aria-label="'.esc_attr($count.' مطلب').'">'.esc_html($count).'</span>';
   },$html);
 });
 function bidrubeh_notice_query_args(){
@@ -846,8 +987,7 @@ add_filter('manage_post_posts_columns',function($cols){
 add_action('manage_post_posts_custom_column',function($col,$id){
   if($col==='bd_slider'){
     if(get_post_meta($id,'bd_in_slider',true)==='1'){
-      if(function_exists('bidrubeh_slider_is_blocked')&&bidrubeh_slider_is_blocked(get_post($id))) echo '⚠ '.esc_html__('مسدود با فیلتر متن','bidrubeh');
-      else echo '✅';
+      echo '✅';
     }
     else echo '—';
     return;
@@ -878,42 +1018,28 @@ function bidrubeh_latest_news_exclude(){
   if($tt) $ex[]=(int)$tt->term_id;
   return $ex;
 }
-function bidrubeh_slider_exclude(){
-  $ex=[];
-  $pslug=trim((string)get_theme_mod('bd_photo_cat','gozaresh-tasviri'));
-  if($pslug!==''){ $pt=get_category_by_slug($pslug); if($pt) $ex[]=(int)$pt->term_id; }
-  return $ex;
-}
+add_action('pre_get_posts',function($query){
+  if(is_admin()||!$query->is_main_query()||!$query->is_category('akhbar')) return;
+  $query->set('bd_news_archive',1);
+  $query->set('category_name','');
+  $query->set('cat','');
+  $query->set('category__not_in',bidrubeh_latest_news_exclude());
+  $query->set('post_type','post');
+  $query->set('post_status','publish');
+  $query->set('posts_per_page',10);
+  $query->set('ignore_sticky_posts',1);
+  $query->set('orderby','date');
+  $query->set('order','DESC');
+});
 function bidrubeh_slider_speed(){
   $s=(int)get_theme_mod('bd_slider_speed',5);
   if($s<0) $s=0; if($s>60) $s=60;
   return (int)apply_filters('bidrubeh_slider_speed',$s);
 }
-function bidrubeh_slider_filter_words(){
-  $raw=trim((string)get_theme_mod('bd_slider_filter',''));
-  $words=$raw===''?[]:preg_split('/[،,]+/u',$raw);
-  $words=array_values(array_filter(array_map('trim',(array)$words)));
-  return (array)apply_filters('bidrubeh_slider_filter_words',$words);
-}
-function bidrubeh_slider_is_blocked($post){
-  $blocked=false;
-  $words=bidrubeh_slider_filter_words();
-  if(!empty($words)){
-    $title=$post instanceof WP_Post?$post->post_title:get_the_title($post);
-    foreach($words as $w){ if($w!==''&&mb_stripos($title,$w)!==false){ $blocked=true; break; } }
-  }
-  return (bool)apply_filters('bidrubeh_slider_is_blocked',$blocked,$post,$words);
-}
-function bidrubeh_slider_posts($count=5){
-  $count=max(1,min(10,(int)$count));
-  $ex=bidrubeh_slider_exclude();
-  $mq=new WP_Query(['posts_per_page'=>$count,'ignore_sticky_posts'=>1,'no_found_rows'=>true,
-    'meta_query'=>[['key'=>'bd_in_slider','value'=>'1']],
-    'category__not_in'=>$ex,'orderby'=>'date','order'=>'DESC']);
-  $posts=[];
-  foreach((array)$mq->posts as $p){ if(!bidrubeh_slider_is_blocked($p)) $posts[]=$p; if(count($posts)>=$count) break; }
-  wp_reset_postdata();
-  return array_slice($posts,0,$count);
+function bidrubeh_slider_posts(){
+  $q=new WP_Query(['posts_per_page'=>-1,'post_type'=>'post','post_status'=>'publish','ignore_sticky_posts'=>1,'no_found_rows'=>true,
+    'meta_query'=>[['key'=>'bd_in_slider','value'=>'1']],'orderby'=>'date','order'=>'DESC']);
+  return array_values((array)$q->posts);
 }
 function bidrubeh_tourism_term(){
   foreach(['جاذبه‌های گردشگری','جاذبه های گردشگری'] as $name){
@@ -931,14 +1057,13 @@ function bidrubeh_tourism_query_args(){
   return $args;
 }
 function bidrubeh_tourism_cards(){
+  if(!bidrubeh_tourism_term()) return '';
   $args=bidrubeh_tourism_query_args();
-  $args['posts_per_page']=20;
   $q=new WP_Query($args);
   if(!$q->have_posts()) return '';
   $posts=array_values($q->posts);
-  wp_reset_postdata();
   shuffle($posts);
-  $out='<div class="bd-tour-grid" id="bdTourGrid" data-speed="'.(int)bidrubeh_slider_speed().'" dir="rtl">';
+  $out='<div class="bd-tour-grid" id="bdTourGrid" dir="rtl" data-speed="'.(int)bidrubeh_slider_speed().'">';
   foreach($posts as $i=>$p){
     $link=get_permalink($p);
     $title=get_the_title($p);
@@ -966,6 +1091,7 @@ function bidrubeh_icon($name){
     'desk'=>'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
     'card'=>'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/>',
     'phone'=>'<path d="M5 4h4l2 5-3 2a12 12 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+    'clock'=>'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
     'mail'=>'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
     'pin'=>'<path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
     'chart'=>'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',

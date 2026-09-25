@@ -19,7 +19,7 @@ if(post_password_required()) return;
 <?php if(!comments_open()): ?>
 <p class="bd-no-comments">ارسال دیدگاه برای این مطلب بسته شده است.</p>
 <?php elseif(function_exists('bidrubeh_comment_blocked')&&bidrubeh_comment_blocked()): ?>
-<div class="bd-sent-ok"><span>⏳</span><div><strong>دیدگاه شما در انتظار تأیید مدیر است.</strong><small>پس از تأیید یا حذف آن می‌توانید دیدگاه جدید ثبت کنید.</small></div></div>
+<div class="bd-comment-pending" role="status"><span class="bd-comment-pending-icon" aria-hidden="true">⏳</span><div><strong>دیدگاه شما در انتظار بررسی مدیر است.</strong><small>تا زمان تأیید یا رد آن، از این سیستم نمی‌توانید دیدگاه جدیدی ثبت کنید.</small></div></div>
 <?php else: ?>
 <?php
 $bd_commenter=wp_get_current_commenter();
@@ -41,19 +41,67 @@ comment_form([
 ?>
 <script>
 (function(){
-  function faMsg(el,empty,short,invalid){
-    if(!el) return;
-    el.addEventListener('invalid',function(){
-      if(el.validity.valueMissing) el.setCustomValidity(empty);
-      else if(el.validity.tooShort) el.setCustomValidity(short);
-      else if(el.validity.typeMismatch||el.validity.patternMismatch) el.setCustomValidity(invalid);
-      else el.setCustomValidity('');
-    });
-    el.addEventListener('input',function(){el.setCustomValidity('');});
+  var form=document.getElementById('commentform');
+  if(!form) return;
+  form.noValidate=true;
+  var fields=[
+    {id:'author',empty:'لطفاً نام خود را وارد کنید.'},
+    {id:'email',empty:'لطفاً ایمیل خود را وارد کنید.',invalid:'ایمیل وارد شده معتبر نیست.'},
+    {id:'comment',empty:'لطفاً متن دیدگاه را وارد کنید.',short:'متن دیدگاه باید حداقل ۱۰ کاراکتر باشد.'}
+  ];
+  var summary=document.createElement('div');
+  summary.className='bd-comment-error-summary';
+  summary.setAttribute('role','alert');
+  summary.hidden=true;
+  form.insertBefore(summary,form.firstChild);
+  function errorFor(item,el){
+    var value=el.value.trim();
+    if(!value) return item.empty;
+    if(item.invalid&&!el.checkValidity()) return item.invalid;
+    if(item.short&&Array.from(value).length<10) return item.short;
+    return '';
   }
-  faMsg(document.getElementById('author'),'لطفاً نام خود را وارد کنید.','','');
-  faMsg(document.getElementById('email'),'لطفاً ایمیل خود را وارد کنید.','','ایمیل وارد شده معتبر نیست.');
-  faMsg(document.getElementById('comment'),'لطفاً متن دیدگاه را وارد کنید.','متن دیدگاه باید حداقل ۱۰ کاراکتر باشد.','');
+  function showError(el,message){
+    var id=el.id+'-error';
+    var node=document.getElementById(id);
+    if(!node){
+      node=document.createElement('small');
+      node.id=id;
+      node.className='bd-field-error';
+      el.parentNode.appendChild(node);
+    }
+    node.textContent=message;
+    node.hidden=!message;
+    if(message){el.setAttribute('aria-invalid','true');el.setAttribute('aria-describedby',id);}
+    else{el.removeAttribute('aria-invalid');el.removeAttribute('aria-describedby');}
+  }
+  fields.forEach(function(item){
+    var el=document.getElementById(item.id);
+    if(!el) return;
+    el.addEventListener('input',function(){
+      if(el.getAttribute('aria-invalid')==='true') showError(el,errorFor(item,el));
+      if(!form.querySelector('[aria-invalid="true"]')) summary.hidden=true;
+    });
+  });
+  form.addEventListener('submit',function(event){
+    var first=null;
+    fields.forEach(function(item){
+      var el=document.getElementById(item.id);
+      if(!el) return;
+      var message=errorFor(item,el);
+      showError(el,message);
+      if(message&&!first) first=el;
+    });
+    if(first){
+      event.preventDefault();
+      summary.textContent='لطفاً موارد مشخص‌شده را اصلاح کنید.';
+      summary.hidden=false;
+      first.focus();
+    }else{
+      var button=form.querySelector('[type="submit"]');
+      if(button) button.disabled=true;
+    }
+  });
 })();
 </script>
 <?php endif; ?>

@@ -10,7 +10,7 @@ Upload `bidrubeh-municipality.zip` from the repository root in WordPress under
 **Appearance > Themes > Add New > Upload Theme**.
 
 The ZIP contains one top-level directory named `bidrubeh-municipality`, as
-required by WordPress. Its current theme version is `1.9.89`.
+required by WordPress. Its current theme version is `1.9.111`.
 
 ## Rebuild the theme ZIP
 
@@ -28,4 +28,3 @@ root-level ZIP.
 Follow [LIARA-DEPLOY.md](LIARA-DEPLOY.md). The recommended target is Liara's
 dedicated WordPress service using Apache, which supplies the database and
 persistent storage automatically.
-

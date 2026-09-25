@@ -2,49 +2,85 @@
 /* Template Name: درباره ما */
 get_header();
 while(have_posts()): the_post();
+  $bd_about_zones = bidrubeh_zones();
+  $bd_about_missions = bidrubeh_missions();
+  $bd_about_phone = trim((string)get_theme_mod('bd_phone',''));
+  $bd_about_email = trim((string)get_theme_mod('bd_email',''));
+  $bd_about_address = trim((string)get_theme_mod('bd_address',''));
+  $bd_about_hotline = trim((string)get_theme_mod('bd_hotline','۱۳۷'));
+  $bd_about_hours = trim((string)get_theme_mod('bd_office_hours','شنبه تا چهارشنبه، ۷:۳۰ تا ۱۴:۳۰'));
+  $bd_about_contact = get_page_by_path('contact-us');
+  $bd_about_contact_url = $bd_about_contact ? get_permalink($bd_about_contact) : home_url('/contact-us/');
 ?>
-<section class="section">
+<section class="bd-about-hero">
   <div class="wrap">
-    <div class="bd-about-grid">
-      <div class="bd-about-text card">
-        <div class="section-title"><h2>معرفی شهرداری بیدروبه</h2></div>
-        <div><?php the_content(); ?></div>
-      </div>
-      <div class="bd-about-side">
-        <div class="card bd-about-card">
-          <h3><span class="bd-card-ico"><?php echo bidrubeh_icon('phone'); ?></span>تماس سریع</h3>
-          <p><span class="bd-row-ico"><?php echo bidrubeh_icon('phone'); ?></span>تلفن: <b><?php echo esc_html(get_theme_mod('bd_phone','061-00000000')); ?></b></p>
-          <p><span class="bd-row-ico"><?php echo bidrubeh_icon('mail'); ?></span>ایمیل: <b><?php echo esc_html(get_theme_mod('bd_email','info@bidrubeh.ir')); ?></b></p>
-          <p><span class="bd-row-ico"><?php echo bidrubeh_icon('pin'); ?></span>نشانی: <?php echo esc_html(get_theme_mod('bd_address','خوزستان، بیدروبه، ساختمان شهرداری مرکزی')); ?></p>
-          <p><span class="bd-row-ico"><?php echo bidrubeh_icon('desk'); ?></span>سامانه پاسخگویی: <b><?php echo esc_html(get_theme_mod('bd_hotline','۱۳۷')); ?></b></p>
-        </div>
-        <div class="card bd-about-card">
-          <h3><span class="bd-card-ico"><?php echo bidrubeh_icon('chart'); ?></span>آمار شهر</h3>
-          <div class="bd-about-nums">
-            <div><b><?php echo esc_html(get_theme_mod('bd_population','۲۵٬۰۰۰+')); ?></b><span>جمعیت</span></div>
-            <div><b><?php echo esc_html(get_theme_mod('bd_area','۱۸ کیلومتر مربع')); ?></b><span>وسعت</span></div>
-            <div><b><?php echo esc_html(get_theme_mod('bd_about_num3_val','۱۲')); ?></b><span><?php echo esc_html(get_theme_mod('bd_about_num3_label','پارک و بوستان')); ?></span></div>
-            <div><b><?php echo esc_html(get_theme_mod('bd_about_num4_val','۳۰+')); ?></b><span><?php echo esc_html(get_theme_mod('bd_about_num4_label','پروژه فعال')); ?></span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="section-title" style="margin-top:26px"><h2>مأموریت و ارزش‌ها</h2></div>
-    <div class="info-grid">
-      <?php foreach(bidrubeh_missions() as $m): ?>
-      <div class="info-card"><h3><?php echo esc_html($m['t']); ?></h3><p><?php echo esc_html($m['d']); ?></p></div>
-      <?php endforeach; ?>
-    </div>
-    <div class="section-title" style="margin-top:26px"><h2>مسیر خدمت</h2></div>
-    <ol class="bd-timeline">
-      <?php foreach(bidrubeh_timeline() as $s): ?>
-      <li><b><?php echo esc_html($s['t']); ?></b><span><?php echo esc_html($s['d']); ?></span></li>
-      <?php endforeach; ?>
-    </ol>
-    <p style="text-align:center;margin-top:26px">
-      <a class="bd-send-btn" href="<?php echo esc_url(home_url('/contact-us/')); ?>"><span>تماس با ما</span></a>
-      <a class="bd-send-btn" href="<?php echo esc_url(home_url('/#news')); ?>" style="margin-right:10px"><span>مشاهده اخبار</span></a>
-    </p>
+    <h1>درباره بیدروبه</h1>
+    <p>از پیشینه شهر تا محله‌های آن؛ بیدروبه را نزدیک‌تر بشناسید.</p>
+    <?php if($bd_about_zones): ?><a class="bd-text-link bd-about-hero-link" href="#zones">آشنایی با محله‌ها ←</a><?php endif; ?>
   </div>
 </section>
+
+<section class="section bd-about-overview">
+  <div class="wrap bd-about-grid">
+    <article class="card bd-about-text">
+      <div class="section-title"><div><h2>معرفی بیدروبه</h2></div></div>
+      <div class="bd-about-prose"><?php the_content(); ?></div>
+    </article>
+    <aside class="bd-about-side" aria-label="اطلاعات تماس شهرداری">
+      <div class="card bd-about-card">
+        <h2>راه‌های ارتباط</h2>
+        <?php if($bd_about_phone!==''): $bd_about_dial=preg_replace('/[^0-9]/','',bidrubeh_fa_to_en($bd_about_phone)); ?>
+        <div class="bd-about-detail"><span class="bd-row-ico"><?php echo bidrubeh_icon('phone'); ?></span><div><small>تلفن شهرداری</small><a href="<?php echo esc_url('tel:'.$bd_about_dial); ?>" dir="ltr"><?php echo esc_html($bd_about_phone); ?></a></div></div>
+        <?php endif; ?>
+        <?php if($bd_about_hotline!==''): $bd_about_hotline_dial=preg_replace('/[^0-9]/','',bidrubeh_fa_to_en($bd_about_hotline)); ?>
+        <div class="bd-about-detail"><span class="bd-row-ico"><?php echo bidrubeh_icon('desk'); ?></span><div><small>پاسخگویی شهروندان</small><a href="<?php echo esc_url('tel:'.$bd_about_hotline_dial); ?>" dir="ltr"><?php echo esc_html($bd_about_hotline); ?></a></div></div>
+        <?php endif; ?>
+        <?php if($bd_about_email!==''): ?>
+        <div class="bd-about-detail"><span class="bd-row-ico"><?php echo bidrubeh_icon('mail'); ?></span><div><small>ایمیل</small><a href="<?php echo esc_url('mailto:'.$bd_about_email); ?>"><?php echo esc_html($bd_about_email); ?></a></div></div>
+        <?php endif; ?>
+        <?php if($bd_about_address!==''): ?>
+        <div class="bd-about-detail"><span class="bd-row-ico"><?php echo bidrubeh_icon('pin'); ?></span><div><small>نشانی</small><span><?php echo esc_html($bd_about_address); ?></span></div></div>
+        <?php endif; ?>
+        <?php if($bd_about_hours!==''): ?>
+        <div class="bd-about-detail"><span class="bd-row-ico"><?php echo bidrubeh_icon('bank'); ?></span><div><small>ساعات کاری</small><span><?php echo esc_html($bd_about_hours); ?></span></div></div>
+        <?php endif; ?>
+        <a class="btn bd-about-contact-btn" href="<?php echo esc_url($bd_about_contact_url); ?>">تماس با ما</a>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<?php if($bd_about_zones): ?>
+<section class="section bd-about-zones" id="zones">
+  <div class="wrap">
+    <div class="section-title"><div><h2>نواحی و محلات</h2></div></div>
+    <p class="bd-section-intro">با محله‌های ثبت‌شده بیدروبه آشنا شوید. اطلاعات این بخش از تنظیمات شهرداری در سایت به‌روز می‌شود.</p>
+    <div class="bd-about-zone-grid">
+      <?php foreach($bd_about_zones as $bd_zone): ?>
+      <article class="bd-about-zone">
+        <h3><?php echo esc_html(bidrubeh_fa_digits($bd_zone['t'])); ?></h3>
+        <?php if($bd_zone['d']!==''): ?><p><?php echo esc_html($bd_zone['d']); ?></p><?php endif; ?>
+      </article>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php if($bd_about_missions): ?>
+<section class="section bd-about-mission">
+  <div class="wrap">
+    <div class="section-title"><div><h2>مأموریت و ارزش‌ها</h2></div></div>
+    <div class="info-grid">
+      <?php foreach($bd_about_missions as $bd_mission): ?>
+      <div class="info-card"><h3><?php echo esc_html($bd_mission['t']); ?></h3><p><?php echo esc_html($bd_mission['d']); ?></p></div>
+      <?php endforeach; ?>
+    </div>
+    <div class="bd-about-actions">
+      <a class="btn" href="<?php echo esc_url($bd_about_contact_url); ?>">ارتباط با شهرداری</a>
+      <a class="bd-text-link" href="<?php echo esc_url(home_url('/#news')); ?>">مشاهده اخبار شهر ←</a>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
 <?php endwhile; get_footer(); ?>

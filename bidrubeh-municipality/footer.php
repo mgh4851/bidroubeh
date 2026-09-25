@@ -4,7 +4,11 @@
     <div>
       <h4><span class="bd-foot-ico"><?php echo bidrubeh_icon('bank'); ?></span><?php bloginfo('name'); ?></h4>
       <p style="font-size:14px"><?php bloginfo('description'); ?></p>
-      <p class="bd-foot-contact"><span class="bd-foot-row"><span class="bd-foot-row-ico"><?php echo bidrubeh_icon('pin'); ?></span><?php echo esc_html(get_theme_mod('bd_address','خوزستان، بیدروبه، ساختمان شهرداری مرکزی')); ?></span><span class="bd-foot-row"><span class="bd-foot-row-ico"><?php echo bidrubeh_icon('phone'); ?></span><span dir="ltr"><?php echo esc_html(get_theme_mod('bd_phone','061-00000000')); ?></span></span><span class="bd-foot-row"><span class="bd-foot-row-ico"><?php echo bidrubeh_icon('mail'); ?></span><?php echo esc_html(get_theme_mod('bd_email','info@bidrubeh.ir')); ?></span></p>
+      <p class="bd-foot-contact">
+        <span class="bd-foot-row"><span class="bd-foot-row-ico"><?php echo bidrubeh_icon('pin'); ?></span><?php echo esc_html(get_theme_mod('bd_address','خوزستان، بیدروبه، ساختمان شهرداری مرکزی')); ?></span>
+        <?php $bd_foot_phone=trim((string)get_theme_mod('bd_phone','')); if($bd_foot_phone!==''): ?><span class="bd-foot-row"><span class="bd-foot-row-ico"><?php echo bidrubeh_icon('phone'); ?></span><span dir="ltr"><?php echo esc_html($bd_foot_phone); ?></span></span><?php endif; ?>
+        <?php $bd_foot_email=trim((string)get_theme_mod('bd_email','')); if($bd_foot_email!==''): ?><span class="bd-foot-row"><span class="bd-foot-row-ico"><?php echo bidrubeh_icon('mail'); ?></span><?php echo esc_html($bd_foot_email); ?></span><?php endif; ?>
+      </p>
       <?php $soc=bidrubeh_social_links(); if($soc!==''){ echo '<div class="bd-socials">'.$soc.'</div>'; } ?>
     </div>
     <div>
