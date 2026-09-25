@@ -4,7 +4,7 @@ Theme URI: https://example.ir/bidrubeh
 Author: Bidrubeh IT
 Author URI: https://example.ir
 Description: پرتال رسمی شهرداری بیدروبه؛ راست‌چین و فارسی برای اطلاع‌رسانی، ارتباط شهروندان و معرفی شهر.
-Version: 1.9.111
+Version: 1.9.112
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: bidrubeh
@@ -566,7 +566,7 @@ body.admin-bar{padding-top:62px}
 .bd-mini-copy strong{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:3;font-size:12px;line-height:1.7}
 .bd-mini-notice-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:12px;background:#e3efe2;color:var(--bd-primary)}
 .bd-mini-notice-icon svg{width:21px;height:21px}
-.bd-mini-news-img,.bd-mini-notice-img{display:block;flex:0 0 92px;width:92px;height:92px;object-fit:cover;border-radius:9px}
+.bd-mini-news-img,.bd-mini-notice-img{display:block;flex:0 0 92px;width:92px;height:92px;object-fit:cover;border-radius:12px;overflow:hidden;clip-path:inset(0 round 12px)}
 .bd-mini-news-ph{display:grid;place-items:center;background:linear-gradient(145deg,#dfece0,#bfd8c4);color:var(--bd-primary)}
 .bd-mini-news-ph svg{width:31px;height:31px}
 .bd-mini-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 13px 8px;min-height:30px}
@@ -692,6 +692,7 @@ body.admin-bar{padding-top:62px}
   .bd-home-lead-grid{grid-template-columns:1fr}
   .bd-home-side{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}
   .bd-mini-panel{height:165px}
+  .bd-mini-news-img,.bd-mini-notice-img{flex-basis:76px;width:76px;height:76px}
   .bd-home-lead .bd-slider,.bd-home-slider-empty{height:270px}
   .bd-city-story-grid{grid-template-columns:1fr}
   .bd-city-story-art{min-height:180px}
@@ -711,6 +712,7 @@ body.admin-bar{padding-top:62px}
   .bd-home-lead .bd-slider,.bd-home-slider-empty{height:220px}
   .bd-home-side{grid-template-columns:1fr;gap:10px}
   .bd-mini-panel{height:155px}
+  .bd-mini-news-img,.bd-mini-notice-img{flex-basis:70px;width:70px;height:70px}
   .bd-home-lead .bd-slide-cap{padding:55px 16px 16px}
   .bd-home-lead .bd-slide-cap strong{font-size:15px}
   .bd-home-slider-empty{padding:24px}
