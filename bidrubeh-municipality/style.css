@@ -4,7 +4,7 @@ Theme URI: https://example.ir/bidrubeh
 Author: Bidrubeh IT
 Author URI: https://example.ir
 Description: پرتال رسمی شهرداری بیدروبه؛ راست‌چین و فارسی برای اطلاع‌رسانی، ارتباط شهروندان و معرفی شهر.
-Version: 1.9.122
+Version: 1.9.123
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: bidrubeh
@@ -49,6 +49,7 @@ body{
 a{color:var(--bd-primary);text-decoration:none}
 a:hover{color:var(--bd-primary-2)}
 img{max-width:100%;height:auto}
+.bd-post-content img{border-radius:8px}
 .container,.wrap{width:min(1200px,94%);margin:0 auto}
 
 /* Merged topbar+header — header blends with site background */
