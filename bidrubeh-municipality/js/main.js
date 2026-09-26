@@ -128,6 +128,18 @@ document.addEventListener('DOMContentLoaded',function(){
     }
     if(!reduced)setInterval(rotate,speed*1000);
   })();
+  document.querySelectorAll('.sidebar .widget_categories').forEach(function(widget){
+    var heading=widget.querySelector('h2,h3,.widget-title');
+    if(!heading||widget.querySelector('details'))return;
+    var details=document.createElement('details');
+    var summary=document.createElement('summary');
+    summary.appendChild(heading);
+    details.appendChild(summary);
+    while(widget.firstChild)details.appendChild(widget.firstChild);
+    details.className='bd-category-disclosure';
+    details.open=!window.matchMedia('(max-width:720px)').matches;
+    widget.appendChild(details);
+  });
   var topBtn=document.getElementById('bdToTop');
   if(topBtn){
     window.addEventListener('scroll',function(){topBtn.classList.toggle('show',window.scrollY>400);},{passive:true});

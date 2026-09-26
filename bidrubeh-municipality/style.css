@@ -4,7 +4,7 @@ Theme URI: https://example.ir/bidrubeh
 Author: Bidrubeh IT
 Author URI: https://example.ir
 Description: پرتال رسمی شهرداری بیدروبه؛ راست‌چین و فارسی برای اطلاع‌رسانی، ارتباط شهروندان و معرفی شهر.
-Version: 1.9.112
+Version: 1.9.122
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: bidrubeh
@@ -740,7 +740,7 @@ body.admin-bar{padding-top:62px}
 .sidebar .widget_categories{padding:18px;background:linear-gradient(155deg,#fff 0%,#f8faf5 100%);border:1px solid #dce7db;border-radius:16px}
 .sidebar .widget_categories h3{display:flex;align-items:center;gap:9px;margin:0 0 14px;padding:0 0 11px;border-bottom:1px solid #e1e9dc;font-size:16px}
 .sidebar .widget_categories h3::before{content:"";display:block;width:9px;height:9px;border-radius:3px;background:var(--bd-accent);transform:rotate(45deg)}
-.sidebar .widget_categories>ul{display:grid;gap:7px}
+.sidebar .widget_categories>ul,.sidebar .bd-category-disclosure>ul{display:grid;gap:7px}
 .sidebar .widget_categories li{display:flex;flex-wrap:wrap;align-items:center;min-width:0;min-height:44px;margin:0;padding:0;border:1px solid #e4ebe1!important;border-radius:10px;background:#fff;transition:background-color .2s,border-color .2s,box-shadow .2s}
 .sidebar .widget_categories li:hover,.sidebar .widget_categories li:focus-within{background:#f0f6ef;border-color:#b9d3bd!important;box-shadow:0 4px 12px rgba(21,93,74,.07)}
 .sidebar .widget_categories li.current-cat{background:#edf5eb;border-color:#aacbb2!important}
@@ -750,3 +750,74 @@ body.admin-bar{padding-top:62px}
 .sidebar .widget_categories .bd-cat-count{display:grid;place-items:center;flex:none;min-width:32px;height:26px;margin:0 0 0 10px;padding:0 7px;border-radius:8px;background:#e8f1e8;color:var(--bd-primary-2);font-size:12px;font-weight:800;font-variant-numeric:normal}
 .sidebar .widget_categories li:hover>.bd-cat-count,.sidebar .widget_categories li.current-cat>.bd-cat-count{background:var(--bd-primary);color:#fff}
 .sidebar .widget_categories li>.children{display:grid;gap:6px;flex-basis:100%;margin:0 12px 10px!important;padding:0 10px 0 0!important;border-right:1px solid #d9e7d9}
+
+/* Header imagery and category archive presentation. */
+.bd-header-images{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-inline-start:auto}
+.bd-header-portrait{display:block;flex:none;width:100px;height:60px;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none}
+.bd-header-portrait img{display:block;width:100%;height:100%;object-fit:contain}
+.bd-category-disclosure summary{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;list-style:none;cursor:pointer;color:var(--bd-primary-2);border-radius:10px}
+.bd-category-disclosure summary::-webkit-details-marker{display:none}
+.bd-category-disclosure summary::after{content:'';display:block;flex:none;width:34px;height:34px;border-radius:50%;border:1px solid #cbdcc6;background:#edf4e9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230e6b4d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center/16px 16px no-repeat;box-shadow:0 2px 6px rgba(23,61,47,.07);transition:transform .25s ease,background-color .2s,border-color .2s,box-shadow .2s}
+.bd-category-disclosure[open] summary::after{transform:rotate(180deg);background-color:#fff;border-color:#b5cfad}
+.bd-category-disclosure summary:hover::after,.bd-category-disclosure summary:focus-visible::after{background-color:#e0eed9;border-color:#8db780;box-shadow:0 0 0 3px rgba(14,107,77,.08)}
+.sidebar .bd-category-disclosure summary h3,.sidebar .bd-category-disclosure summary h2{margin:0;border:0;padding:0}
+.bd-category-disclosure[open] summary{margin-bottom:14px}
+.bd-category-disclosure summary:focus-visible{outline:2px solid var(--bd-primary);outline-offset:5px}
+.bd-archive-heading{display:flex;align-items:center;gap:18px;padding:25px 28px;background:linear-gradient(120deg,#edf4eb,#fffaf0);border:1px solid #dce7db;border-inline-start:4px solid var(--bd-accent);margin-bottom:22px}
+.bd-archive-icon{display:grid;place-items:center;flex:none;width:54px;height:54px;background:#fff;color:var(--bd-primary);border:1px solid #dce7db;border-radius:15px}
+.bd-archive-icon svg{width:27px;height:27px}
+.bd-archive-heading h1{margin:0;color:var(--bd-primary-2);font-size:24px;line-height:1.6}
+.bd-archive-heading p{margin:5px 0 0;color:var(--bd-muted);font-size:13px}
+.bd-archive-description:empty{display:none}
+@media(max-width:960px){.bd-header-images{margin-inline-start:0}}
+@media(max-width:560px){.bd-header-images{gap:0}.bd-header-images:not(.bd-has-portrait){display:none}.bd-archive-heading{padding:18px;gap:12px}.bd-archive-heading h1{font-size:19px}.bd-archive-icon{width:42px;height:42px;border-radius:12px}}
+
+/* Building permit guide */
+.bd-permit-hero{padding:48px 0;background:linear-gradient(125deg,#e8f0e5,#faf6eb);border-bottom:1px solid var(--bd-line)}
+.bd-permit-hero-grid{display:grid;grid-template-columns:1fr 240px;gap:50px;align-items:center}
+.bd-permit-back{color:var(--bd-muted);font-size:12px}
+.bd-permit-hero h1{font-size:clamp(24px,3vw,36px);line-height:1.7;color:var(--bd-primary-2);margin:14px 0}
+.bd-permit-hero p{max-width:60ch;color:var(--bd-muted);margin:0 0 22px;line-height:2}
+.bd-permit-emblem{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;min-height:205px;background:rgba(255,255,255,.65);border:1px solid #d6e2d1;border-radius:28px;color:var(--bd-primary);box-shadow:10px 10px 0 #e0c79633}
+.bd-permit-emblem svg{width:74px;height:74px;stroke-width:1.2}.bd-permit-emblem span{font-weight:700}.bd-permit-emblem small{color:var(--bd-muted)}
+.bd-permit-layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:38px;align-items:start}
+.bd-permit-intro{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}.bd-permit-intro h2{margin:0;font-size:22px;color:var(--bd-primary-2)}.bd-permit-intro>span{font-size:12px;padding:5px 12px;border-radius:20px;background:#eaf1e6;color:var(--bd-primary)}
+.bd-permit-steps{list-style:none;padding:0;margin:0}.bd-permit-steps>li{position:relative;padding:0 62px 22px 0;scroll-margin-top:90px}.bd-permit-steps>li:not(:last-child)::before{content:'';position:absolute;right:21px;top:42px;bottom:0;width:2px;background:#d5e3d0}
+.bd-permit-number{position:absolute;right:0;top:0;display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:var(--bd-primary);color:#fff;font-size:20px;font-weight:700;border:4px solid #f8f7f1;box-shadow:0 0 0 1px #d5e3d0}
+.bd-permit-card{padding:21px 25px;background:#fff;border:1px solid #dce7db;border-radius:18px;box-shadow:0 5px 20px rgba(23,61,47,.035)}.bd-permit-steps>li:last-child .bd-permit-card{background:#f2f6ed;border-color:#cadbc2}
+.bd-permit-card-top{display:flex;justify-content:space-between;align-items:center;color:var(--bd-muted);font-size:11px}.bd-permit-step-icon{display:grid;place-items:center;width:32px;height:32px;background:#eef4e9;color:var(--bd-primary);border-radius:9px}.bd-permit-step-icon svg{width:19px;height:19px}
+.bd-permit-card h3{font-size:19px;color:var(--bd-primary-2);margin:8px 0}.bd-permit-description p{margin:0;color:var(--bd-muted);font-size:14px;line-height:2;overflow-wrap:anywhere}
+.bd-permit-aside{position:sticky;top:80px;display:grid;gap:16px}.bd-permit-nav{background:#fff;border:1px solid var(--bd-line);border-radius:18px;padding:21px}.bd-permit-nav h2,.bd-permit-help h2{font-size:16px;margin:0 0 15px;color:var(--bd-primary-2)}
+.bd-permit-nav a{display:flex;align-items:center;gap:10px;padding:10px 0;font-size:12px;color:var(--bd-primary-2);border-bottom:1px solid #edf0e8}.bd-permit-nav a:last-child{border:0}.bd-permit-nav a>span{display:grid;place-items:center;flex:none;width:25px;height:25px;background:#eef4e9;border-radius:8px;color:var(--bd-primary)}.bd-permit-nav a:hover{color:var(--bd-primary);text-decoration:underline;text-underline-offset:4px}
+.bd-permit-help{padding:22px;background:#eee5d4;border:1px solid #e4d8bd;border-radius:18px}.bd-permit-help>span svg{width:25px;height:25px;color:var(--bd-primary);margin-bottom:10px}.bd-permit-help p{font-size:13px;line-height:2;color:var(--bd-muted)}.bd-permit-help a{font-size:13px;font-weight:700;color:var(--bd-primary)}
+@media(max-width:960px){.bd-permit-layout{grid-template-columns:minmax(0,1fr) 240px;gap:22px}.bd-permit-hero-grid{grid-template-columns:1fr 190px;gap:25px}}
+@media(max-width:720px){.bd-permit-hero{padding:30px 0}.bd-permit-hero-grid,.bd-permit-layout{grid-template-columns:1fr}.bd-permit-emblem{display:none}.bd-permit-aside{position:static}.bd-permit-nav{display:none}.bd-permit-main{padding:30px 0}.bd-permit-steps>li{padding-right:49px}.bd-permit-number{width:36px;height:36px;font-size:16px;border-radius:11px}.bd-permit-steps>li:not(:last-child)::before{right:17px;top:36px}.bd-permit-card{padding:16px}.bd-permit-card h3{font-size:17px}.bd-permit-description p{font-size:13px}}
+
+/* Municipality organizational chart */
+.bd-units-hero{padding:38px 0;text-align:center;background:linear-gradient(120deg,#e8f0e5,#faf6eb);border-bottom:1px solid var(--bd-line)}
+.bd-units-hero a{color:var(--bd-muted);font-size:12px}.bd-units-hero h1{color:var(--bd-primary-2);font-size:clamp(25px,3vw,36px);margin:14px 0 8px}.bd-units-hero p{color:var(--bd-muted);margin:0;font-size:14px}
+.bd-org-chart{max-width:950px;margin:auto}.bd-org-root{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;width:min(100%,310px);margin:0 auto 38px;padding:24px;background:linear-gradient(140deg,#0e6b4d,#164b3b);color:#fff;border-radius:22px;box-shadow:0 10px 24px rgba(14,107,77,.14);border:1px solid #1e7055}
+.bd-org-root::after{content:'';position:absolute;top:100%;left:50%;width:2px;height:38px;background:#bdceb5;transform:translateX(-50%)}.bd-org-root-icon{display:grid;place-items:center;width:54px;height:54px;border:1px solid #ffffff40;background:#ffffff12;border-radius:16px}.bd-org-root-icon svg{width:32px;height:32px}.bd-org-root h2{font-size:22px;margin:0}.bd-org-root>span:last-child{color:#d7e8dc;font-size:12px}
+.bd-org-branches{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 70px;list-style:none;padding:0;margin:0;isolation:isolate}.bd-org-branches::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:2px;transform:translateX(-50%);background:#bdceb5;z-index:-1}
+.bd-org-branches>li{position:relative;display:flex;align-items:flex-start;padding-top:16px;min-width:0}.bd-org-branches>li::before{content:'';position:absolute;top:48px;left:-35px;width:35px;height:2px;background:#bdceb5;z-index:-1}.bd-org-branches>li:nth-child(even)::before{left:auto;right:-35px}
+.bd-org-card{width:100%;padding:21px;background:#fff;border:1px solid #dce7db;border-radius:17px;box-shadow:0 5px 20px rgba(23,61,47,.035)}.bd-org-card-heading{display:flex;align-items:center;gap:12px}.bd-org-icon{display:grid;place-items:center;flex:none;width:42px;height:42px;background:#eef4e9;color:var(--bd-primary);border-radius:12px}.bd-org-icon svg{width:23px;height:23px}.bd-org-card h3{margin:0;flex:1;color:var(--bd-primary-2);font-size:17px;line-height:1.8;overflow-wrap:anywhere}.bd-org-number{font-size:12px;color:#8d9b87}.bd-org-description{margin-top:12px;border-top:1px solid #edf0e8;padding-top:12px}.bd-org-description p{font-size:13px;line-height:2;color:var(--bd-muted);margin:0;overflow-wrap:anywhere}
+.bd-org-empty{text-align:center;color:var(--bd-muted);padding:25px}.bd-units-contact{display:flex;align-items:center;gap:18px;max-width:950px;margin:38px auto 0;padding:22px 25px;border:1px solid #e1d6bd;background:#f1eadb;border-radius:18px}.bd-units-contact>span{color:var(--bd-primary)}.bd-units-contact>span svg{width:30px;height:30px}.bd-units-contact>div{flex:1}.bd-units-contact h2{font-size:17px;color:var(--bd-primary-2);margin:0 0 5px}.bd-units-contact p{margin:0;color:var(--bd-muted);font-size:13px}.bd-units-contact .btn{white-space:nowrap}
+@media(max-width:720px){.bd-units-hero{padding:30px 0}.bd-units-section{padding:30px 0}.bd-org-root{margin:0 0 24px auto;width:100%;padding:20px}.bd-org-root::after{left:auto;right:17px;transform:none;height:24px}.bd-org-branches{grid-template-columns:1fr;gap:12px;padding-right:36px}.bd-org-branches::before{left:auto;right:17px;transform:none}.bd-org-branches>li{padding-top:0}.bd-org-branches>li::before,.bd-org-branches>li:nth-child(even)::before{left:auto;right:-18px;width:18px;top:37px}.bd-org-card{padding:16px}.bd-org-card h3{font-size:15px}.bd-org-icon{width:36px;height:36px;border-radius:10px}.bd-org-icon svg{width:20px;height:20px}.bd-units-contact{flex-wrap:wrap;padding:18px;gap:12px}.bd-units-contact>div{flex-basis:75%}.bd-units-contact .btn{margin-right:42px}}
+
+.bd-post-views{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:400;line-height:1.7;color:var(--bd-muted);white-space:nowrap}
+.bd-post-views>span:first-child{display:flex}.bd-post-views svg{width:15px;height:15px;flex:none}
+.bd-post-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}.bd-post-meta .bd-post-views{font-size:12px}
+.bd-mini-copy .bd-post-views{font-size:9px;margin:0}.bd-mini-copy .bd-post-views svg{width:12px;height:12px}
+.bd-card-date-views,.bd-mini-copy small.bd-card-date-views{display:flex;flex-wrap:wrap;align-items:center;gap:3px 12px}
+.bd-mini-copy small.bd-card-date-views{gap:2px 8px}
+.bd-card-date-views>span:first-child{white-space:nowrap}
+
+.bd-about-information{padding:28px 0;background:#eef2e9;border-block:1px solid #e0e7d9}
+.bd-about-information .section-title{margin-bottom:18px}.bd-about-information .section-title h2{font-size:21px}
+.bd-about-info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.bd-about-info-card{display:flex;flex-direction:column;gap:12px;min-width:0;background:#fff;border:1px solid #dce5d6;border-radius:16px;padding:18px;box-shadow:0 3px 12px rgba(23,61,47,.035)}
+.bd-about-info-heading{display:flex;align-items:center;gap:10px}.bd-about-info-heading>span{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:10px;background:#eaf2e5;color:var(--bd-primary)}.bd-about-info-heading svg{width:20px;height:20px}.bd-about-info-heading h3{font-size:16px;line-height:1.7;color:var(--bd-primary-2);margin:0;overflow-wrap:anywhere}
+.bd-about-info-card>p{margin:0;font-size:12px;line-height:1.9;color:var(--bd-muted);overflow-wrap:anywhere}
+.bd-about-info-numbers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:0;margin-top:auto;padding-top:12px;border-top:1px solid #e8eee2;text-align:center}.bd-about-info-numbers>div{display:flex;flex-direction:column-reverse;justify-content:flex-end;gap:4px;padding:8px 4px;background:#f6f8f2;border-radius:9px;min-width:0}.bd-about-info-numbers dt{font-size:10px;line-height:1.7;color:var(--bd-muted);overflow-wrap:anywhere}.bd-about-info-numbers dd{margin:0;font-size:18px;font-weight:700;line-height:1.5;color:var(--bd-primary);overflow-wrap:anywhere}
+@media(max-width:960px){.bd-about-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.bd-about-info-grid{grid-template-columns:1fr}.bd-about-info-card{padding:16px}.bd-about-information .section-title h2{font-size:18px}}

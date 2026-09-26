@@ -31,8 +31,17 @@
     <nav class="main-nav" id="mainNav" aria-label="منوی اصلی">
       <?php wp_nav_menu(['theme_location'=>'primary','container'=>false,'menu_class'=>'','fallback_cb'=>'bidrubeh_menu_fallback']); ?>
     </nav>
-    <?php $bd_slogan_raw=trim((string)get_theme_mod('bd_slogan','')); if(preg_match('#^https?://#i',$bd_slogan_raw)) $bd_slogan_url=$bd_slogan_raw; elseif($bd_slogan_raw!=='') $bd_slogan_url=wp_get_attachment_image_url((int)$bd_slogan_raw,'full'); else $bd_slogan_url=''; if($bd_slogan_url && $bd_slogan_url!==$bd_logo_url): ?>
+    <?php $bd_slogan_raw=trim((string)get_theme_mod('bd_slogan','')); if(preg_match('#^https?://#i',$bd_slogan_raw)) $bd_slogan_url=$bd_slogan_raw; elseif($bd_slogan_raw!=='') $bd_slogan_url=wp_get_attachment_image_url((int)$bd_slogan_raw,'full'); else $bd_slogan_url='';
+    $bd_portrait=trim((string)get_theme_mod('bd_header_portrait','')); $bd_portrait_url=preg_match('#^https?://#i',$bd_portrait)?$bd_portrait:wp_get_attachment_image_url((int)$bd_portrait,'medium');
+    if(($bd_slogan_url && $bd_slogan_url!==$bd_logo_url)||$bd_portrait_url): ?>
+    <div class="bd-header-images<?php echo $bd_portrait_url?' bd-has-portrait':''; ?>">
+    <?php if($bd_slogan_url && $bd_slogan_url!==$bd_logo_url): ?>
     <span class="slogan"><img class="slogan-img" src="<?php echo esc_url($bd_slogan_url); ?>" alt="<?php esc_attr_e('شعار سال','bidrubeh'); ?>" width="100" height="44"></span>
+    <?php endif; ?>
+    <?php if($bd_portrait_url): ?>
+    <span class="bd-header-portrait"><img src="<?php echo esc_url($bd_portrait_url); ?>" alt="<?php esc_attr_e('تصویر رهبری','bidrubeh'); ?>" width="100" height="60"></span>
+    <?php endif; ?>
+    </div>
     <?php endif; ?>
   </div>
 </header>

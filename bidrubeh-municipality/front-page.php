@@ -18,7 +18,7 @@ $bd_slides = bidrubeh_slider_posts();
 $bd_mini_notice_args = bidrubeh_notice_query_args();
 $bd_mini_notice_args['posts_per_page'] = 5;
 $bd_mini_notices = get_posts($bd_mini_notice_args);
-$bd_mini_news_args = ['posts_per_page'=>5,'post_type'=>'post','post_status'=>'publish','ignore_sticky_posts'=>1,'no_found_rows'=>true,'orderby'=>'date','order'=>'DESC'];
+$bd_mini_news_args = bidrubeh_home_news_args(5);
 $bd_mini_news_exclude = bidrubeh_latest_news_exclude();
 if($bd_mini_news_exclude) $bd_mini_news_args['category__not_in'] = $bd_mini_news_exclude;
 $bd_mini_news = get_posts($bd_mini_news_args);
@@ -63,7 +63,7 @@ $bd_mini_news = get_posts($bd_mini_news_args);
             <article class="bd-mini-slide<?php echo $bd_i===0?' active':''; ?>" aria-hidden="<?php echo $bd_i===0?'false':'true'; ?>"<?php echo $bd_i===0?'':' inert'; ?>>
               <a class="bd-mini-notice-link" href="<?php echo esc_url(get_permalink($bd_post)); ?>">
                 <?php if(has_post_thumbnail($bd_post->ID)) echo get_the_post_thumbnail($bd_post->ID,'medium',['class'=>'bd-mini-notice-img','alt'=>'']); else echo '<span class="bd-mini-notice-icon" aria-hidden="true">'.bidrubeh_icon('news').'</span>'; ?>
-                <span class="bd-mini-copy"><small><?php echo esc_html(bidrubeh_jdate($bd_post)); ?></small><strong><?php echo esc_html(get_the_title($bd_post)); ?></strong></span>
+                <span class="bd-mini-copy"><small class="bd-card-date-views"><span><?php echo esc_html(bidrubeh_jdate($bd_post)); ?></span><?php echo bidrubeh_post_views_html($bd_post->ID); ?></small><strong><?php echo esc_html(get_the_title($bd_post)); ?></strong></span>
               </a>
             </article>
             <?php endforeach; ?>
@@ -81,7 +81,7 @@ $bd_mini_news = get_posts($bd_mini_news_args);
             <article class="bd-mini-slide<?php echo $bd_i===0?' active':''; ?>" aria-hidden="<?php echo $bd_i===0?'false':'true'; ?>"<?php echo $bd_i===0?'':' inert'; ?>>
               <a class="bd-mini-news-link" href="<?php echo esc_url(get_permalink($bd_post)); ?>">
                 <?php if(has_post_thumbnail($bd_post->ID)) echo get_the_post_thumbnail($bd_post->ID,'medium',['class'=>'bd-mini-news-img']); else echo '<span class="bd-mini-news-img bd-mini-news-ph" aria-hidden="true">'.bidrubeh_icon('news').'</span>'; ?>
-                <span class="bd-mini-copy"><small><?php echo esc_html(bidrubeh_jdate($bd_post)); ?></small><strong><?php echo esc_html(get_the_title($bd_post)); ?></strong></span>
+                <span class="bd-mini-copy"><small class="bd-card-date-views"><span><?php echo esc_html(bidrubeh_jdate($bd_post)); ?></span><?php echo bidrubeh_post_views_html($bd_post->ID); ?></small><strong><?php echo esc_html(get_the_title($bd_post)); ?></strong></span>
               </a>
             </article>
             <?php endforeach; ?>
@@ -103,7 +103,7 @@ $bd_mini_news = get_posts($bd_mini_news_args);
       <?php while($bd_photo_q->have_posts()): $bd_photo_q->the_post(); ?>
       <a class="bd-photo-card" href="<?php the_permalink(); ?>">
         <?php if(has_post_thumbnail()) the_post_thumbnail('large',['class'=>'bd-photo-card-img']); else echo '<span class="bd-photo-card-img bd-photo-ph"></span>'; ?>
-        <span class="bd-photo-card-body"><strong><?php the_title(); ?></strong><small><?php echo esc_html(bidrubeh_pdate('Y/m/d')); ?></small></span>
+        <span class="bd-photo-card-body"><strong><?php the_title(); ?></strong><small class="bd-card-date-views"><span><?php echo esc_html(bidrubeh_pdate('Y/m/d')); ?></span><?php echo bidrubeh_post_views_html(); ?></small></span>
       </a>
       <?php endwhile; wp_reset_postdata(); ?>
     </div>
@@ -123,13 +123,13 @@ $bd_mini_news = get_posts($bd_mini_news_args);
 <section class="section bd-section-soft" id="news">
   <div class="wrap">
     <div class="section-title"><div><h2>آخرین اخبار</h2></div><a class="bd-text-link" href="<?php echo esc_url($bd_news_archive_url); ?>">همه خبرها ←</a></div>
-    <?php $bd_news_args=['posts_per_page'=>3,'ignore_sticky_posts'=>1]; $bd_exclude=bidrubeh_latest_news_exclude(); if($bd_exclude) $bd_news_args['category__not_in']=$bd_exclude; $bd_news_q=new WP_Query($bd_news_args); ?>
+    <?php $bd_news_q=new WP_Query(bidrubeh_home_news_args(3)); ?>
     <?php if($bd_news_q->have_posts()): ?>
     <div class="news-grid bd-home-news">
       <?php while($bd_news_q->have_posts()): $bd_news_q->the_post(); ?>
       <a class="news-thumb-card" href="<?php the_permalink(); ?>">
         <?php if(has_post_thumbnail()) the_post_thumbnail('medium_large',['class'=>'news-thumb-img']); else echo '<span class="news-thumb-img news-thumb-ph"></span>'; ?>
-        <span class="news-thumb-body"><small class="meta"><?php echo esc_html(bidrubeh_pdate('')); ?></small><strong><?php the_title(); ?></strong></span>
+        <span class="news-thumb-body"><small class="meta bd-card-date-views"><span><?php echo esc_html(bidrubeh_pdate('')); ?></span><?php echo bidrubeh_post_views_html(); ?></small><strong><?php the_title(); ?></strong></span>
       </a>
       <?php endwhile; wp_reset_postdata(); ?>
     </div>

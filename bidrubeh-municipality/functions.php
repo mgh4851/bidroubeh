@@ -1,5 +1,5 @@
 <?php
-define('BIDRUBEH_VER','1.9.112');
+define('BIDRUBEH_VER','1.9.122');
 add_action('customize_controls_enqueue_scripts',function(){
   wp_add_inline_script('customize-controls',"(function(){var fa='۰۱۲۳۴۵۶۷۸۹';function toFa(s){return String(s).replace(/[0-9]/g,function(d){return fa[d];});}document.addEventListener('input',function(e){var t=e.target;if(!t||!t.id||t.tagName!=='INPUT')return;if(/bd_(slider_count|slider_speed|notice_count|photo_count|logo_w|logo_h|slogan_w|slogan_h|bar\d+_pct)/.test(t.id){var p=null;try{p=t.selectionStart;}catch(_){}var v=toFa(t.value);if(v!==t.value){t.value=v;try{if(p!==null)t.setSelectionRange(p,p);}catch(_){}}}});})();");
 });
@@ -72,7 +72,7 @@ function bidrubeh_social_links(){
   return $out;
 }
 function bidrubeh_menu_fallback(){
-  echo '<ul><li><a href="'.esc_url(home_url('/')).'">صفحه اصلی</a></li><li><a href="#news">اخبار</a></li></ul>';
+  echo '<ul><li><a href="'.esc_url(home_url('/')).'">صفحه اصلی</a></li><li><a href="'.esc_url(home_url('/#news')).'">اخبار</a></li><li><a href="'.esc_url(home_url('/building-permit/')).'">مراحل پروانه ساختمانی</a></li></ul>';
 }
 function bidrubeh_calendar_events(){
   return [
@@ -638,6 +638,8 @@ add_action('customize_register',function($wp_customize){
   $wp_customize->add_control('bd_logo_h',['label'=>__('ارتفاع لوگو (پیکسل)','bidrubeh'),'description'=>__('عدد فارسی یا انگلیسی، مثلا ۶۰ یا 60','bidrubeh'),'section'=>'bidrubeh_brand','type'=>'text','input_attrs'=>['inputmode'=>'numeric','placeholder'=>'۶۰']]);
   $wp_customize->add_setting('bd_slogan',['default'=>'','sanitize_callback'=>'bidrubeh_sanitize_logo','transport'=>'refresh']);
   $wp_customize->add_control(new WP_Customize_Image_Control($wp_customize,'bd_slogan',['label'=>__('تصویر شعار سال','bidrubeh'),'section'=>'bidrubeh_brand']));
+  $wp_customize->add_setting('bd_header_portrait',['default'=>'','sanitize_callback'=>'bidrubeh_sanitize_logo','transport'=>'refresh']);
+  $wp_customize->add_control(new WP_Customize_Image_Control($wp_customize,'bd_header_portrait',['label'=>__('عکس رهبری در هدر','bidrubeh'),'section'=>'bidrubeh_brand','description'=>__('عکس را انتخاب یا بارگذاری کنید. در سمت چپ شعار سال نمایش داده می‌شود؛ با حذف تصویر، باکس آن مخفی خواهد شد.','bidrubeh')]));
   $wp_customize->add_setting('bd_slogan_w',['default'=>150,'sanitize_callback'=>'bidrubeh_sanitize_num','transport'=>'refresh']);
   $wp_customize->add_control('bd_slogan_w',['label'=>__('پهنای شعار سال (پیکسل)','bidrubeh'),'description'=>__('عدد فارسی یا انگلیسی، مثلا ۱۵۰ یا 150','bidrubeh'),'section'=>'bidrubeh_brand','type'=>'text','input_attrs'=>['inputmode'=>'numeric','placeholder'=>'۱۵۰']]);
   $wp_customize->add_setting('bd_slogan_h',['default'=>60,'sanitize_callback'=>'bidrubeh_sanitize_num','transport'=>'refresh']);
@@ -851,7 +853,7 @@ function bidrubeh_zones(){
   }
   return $out;
 }
-function bidrubeh_info_cards(){
+function bidrubeh_info_cards($configured_only=false){
   $defs=[
     1=>['t'=>'اطلاعات شهری','d'=>'مدیریت یکپارچه خدمات، عمران محلات و نگهداشت معابر و پارک‌ها.','n'=>[['۴','ناحیه خدماتی'],['۱۲','پارک و بوستان'],['۳۰+','پروژه فعال']]],
     2=>['t'=>'فرهنگ و اجتماع','d'=>'برنامه‌های فرهنگی، ورزشی و آموزشی برای خانواده‌ها و جوانان.','n'=>[['۶','فرهنگسرا'],['۲۰+','رویداد سالانه'],['۸','زمین ورزشی']]],
@@ -862,13 +864,13 @@ function bidrubeh_info_cards(){
   ];
   $out=[];
   foreach($defs as $i=>$d){
-    $t=trim((string)get_theme_mod('bd_info'.$i.'_title',$d['t']));
+    $t=trim((string)get_theme_mod('bd_info'.$i.'_title',$configured_only?'':$d['t']));
     if($t==='') continue;
-    $desc=trim((string)get_theme_mod('bd_info'.$i.'_desc',$d['d']));
+    $desc=trim((string)get_theme_mod('bd_info'.$i.'_desc',$configured_only?'':$d['d']));
     $nums=[];
     foreach([1,2,3] as $k){
-      $v=trim((string)get_theme_mod('bd_info'.$i.'_n'.$k.'v',$d['n'][$k-1][0]));
-      $l=trim((string)get_theme_mod('bd_info'.$i.'_n'.$k.'l',$d['n'][$k-1][1]));
+      $v=trim((string)get_theme_mod('bd_info'.$i.'_n'.$k.'v',$configured_only?'':$d['n'][$k-1][0]));
+      $l=trim((string)get_theme_mod('bd_info'.$i.'_n'.$k.'l',$configured_only?'':$d['n'][$k-1][1]));
       if($v===''&&$l==='') continue;
       $nums[]=['v'=>$v,'l'=>$l];
     }
@@ -940,7 +942,9 @@ function bidrubeh_photo_query_args(){
   if($count<1) $count=3;
   if($count>10) $count=10;
   $args=['posts_per_page'=>$count,'ignore_sticky_posts'=>1,'no_found_rows'=>true];
-  if($cat!=='') $args['category_name']=$cat;
+  $term=$cat!==''?get_category_by_slug($cat):null;
+  $args['category__in']=$term?[(int)$term->term_id]:[0];
+  if(!$term) $args['post__in']=[0];
   return $args;
 }
 add_action('add_meta_boxes',function(){
@@ -1017,6 +1021,11 @@ function bidrubeh_latest_news_exclude(){
   $tt=bidrubeh_tourism_term();
   if($tt) $ex[]=(int)$tt->term_id;
   return $ex;
+}
+function bidrubeh_home_news_args($count){
+  return ['posts_per_page'=>$count,'post_type'=>'post','post_status'=>'publish','ignore_sticky_posts'=>1,'no_found_rows'=>true,'orderby'=>'date','order'=>'DESC',
+    'category__not_in'=>bidrubeh_latest_news_exclude(),
+    'meta_query'=>['relation'=>'OR',['key'=>'bd_in_slider','compare'=>'NOT EXISTS'],['key'=>'bd_in_slider','value'=>'1','compare'=>'!=']]];
 }
 add_action('pre_get_posts',function($query){
   if(is_admin()||!$query->is_main_query()||!$query->is_category('akhbar')) return;
@@ -1148,3 +1157,99 @@ add_filter('widget_display_callback',function($instance,$widget,$args){
   echo $args['after_widget'];
   return false;
 },10,3);
+
+function bidrubeh_permit_defaults(){
+  return [
+    ['title'=>'مدارک اثبات مالکیت','description'=>'مدارک اثبات مالکیت شامل سند، کاغذ خرید یا برگه واگذاری را آماده کنید.','icon'=>'doc'],
+    ['title'=>'مدارک هویتی','description'=>'رونوشت کارت ملی و شناسنامه را آماده کنید.','icon'=>'card'],
+    ['title'=>'نقشه محل احداث بنا','description'=>'نقشه رقوم‌دار یا UTM محل احداث بنا را تهیه کنید.','icon'=>'map'],
+    ['title'=>'ثبت درخواست در دبیرخانه','description'=>'درخواست پروانه ساختمانی را ارائه و در دبیرخانه شهرداری ثبت کنید.','icon'=>'news'],
+    ['title'=>'کارشناسی و ادامه مراحل در شهرداری','description'=>'کارشناسی انجام می‌شود و سایر مراحل درخواست توسط شهرداری پیگیری خواهد شد.','icon'=>'bank'],
+  ];
+}
+function bidrubeh_permit_steps(){
+  $defaults=bidrubeh_permit_defaults(); $steps=[];
+  for($i=1;$i<=10;$i++){
+    $default=$defaults[$i-1]??['title'=>'','description'=>'','icon'=>'doc'];
+    $title=trim((string)get_theme_mod('bd_permit_'.$i.'_title',$default['title']));
+    if($title==='')continue;
+    $steps[]=['title'=>$title,'description'=>trim((string)get_theme_mod('bd_permit_'.$i.'_description',$default['description'])),'icon'=>$default['icon']];
+  }
+  return $steps;
+}
+add_action('customize_register',function($customizer){
+  $customizer->add_section('bd_permit',['title'=>'مراحل درخواست پروانه ساختمانی','priority'=>33,'description'=>'تا ده مرحله را به ترتیب تنظیم کنید. مراحل بدون عنوان نمایش داده نمی‌شوند.']);
+  $defaults=bidrubeh_permit_defaults();
+  for($i=1;$i<=10;$i++){
+    $default=$defaults[$i-1]??['title'=>'','description'=>''];
+    foreach(['title'=>'عنوان','description'=>'توضیحات'] as $field=>$label){
+      $key='bd_permit_'.$i.'_'.$field;
+      $customizer->add_setting($key,['default'=>$default[$field],'sanitize_callback'=>$field==='title'?'sanitize_text_field':'sanitize_textarea_field','transport'=>'refresh']);
+      $customizer->add_control($key,['label'=>$label.' مرحله '.bidrubeh_fa_digits($i),'section'=>'bd_permit','type'=>$field==='title'?'text':'textarea']);
+    }
+  }
+});
+
+function bidrubeh_unit_defaults(){
+  return [
+    ['title'=>'امور عمرانی و شهرسازی','icon'=>'bank'],
+    ['title'=>'خدمات شهری','icon'=>'pin'],
+    ['title'=>'امور مالی و دارایی','icon'=>'chart'],
+    ['title'=>'امور مالی','icon'=>'card'],
+    ['title'=>'واحد آمر','icon'=>'doc'],
+    ['title'=>'واحد کارپردازی','icon'=>'desk'],
+    ['title'=>'واحد خدمات','icon'=>'bolt'],
+  ];
+}
+function bidrubeh_municipal_units(){
+  $defaults=bidrubeh_unit_defaults();$units=[];
+  for($i=1;$i<=10;$i++){
+    $default=$defaults[$i-1]??['title'=>'','icon'=>'doc'];
+    $title=trim((string)get_theme_mod('bd_unit_'.$i.'_title',$default['title']));
+    if($title==='')continue;
+    $units[]=['title'=>$title,'description'=>trim((string)get_theme_mod('bd_unit_'.$i.'_description','')),'icon'=>$default['icon']];
+  }
+  return $units;
+}
+add_action('customize_register',function($customizer){
+  $customizer->add_section('bd_units',['title'=>'واحدهای شهرداری','priority'=>34,'description'=>'نام و توضیح حداکثر ده واحد را وارد کنید. واحد بدون عنوان نمایش داده نمی‌شود. همه واحدها زیرمجموعه شهرداری هستند.']);
+  $customizer->add_setting('bd_units_root',['default'=>'شهرداری بیدروبه','sanitize_callback'=>'sanitize_text_field','transport'=>'refresh']);
+  $customizer->add_control('bd_units_root',['label'=>'عنوان رأس چارت','section'=>'bd_units','type'=>'text']);
+  $defaults=bidrubeh_unit_defaults();
+  for($i=1;$i<=10;$i++){
+    foreach(['title'=>'نام','description'=>'توضیحات'] as $field=>$label){
+      $key='bd_unit_'.$i.'_'.$field;
+      $customizer->add_setting($key,['default'=>$field==='title'?($defaults[$i-1]['title']??''):'','sanitize_callback'=>$field==='title'?'sanitize_text_field':'sanitize_textarea_field','transport'=>'refresh']);
+      $customizer->add_control($key,['label'=>$label.' واحد '.bidrubeh_fa_digits($i),'section'=>'bd_units','type'=>$field==='title'?'text':'textarea']);
+    }
+  }
+});
+
+// Use the raw WordPress date to avoid converting an already Jalali date twice.
+function bidrubeh_admin_publication_date($display,$post){
+  if(!$post||empty($post->post_date)||$post->post_date==='0000-00-00 00:00:00')return $display;
+  $date=DateTimeImmutable::createFromFormat('!Y-m-d H:i:s',$post->post_date,wp_timezone());
+  if(!$date)return $display;
+  [$year,$month,$day]=bidrubeh_g2j((int)$date->format('Y'),(int)$date->format('n'),(int)$date->format('j'));
+  return '<span dir="ltr">'.esc_html(bidrubeh_fa_digits(sprintf('%04d/%02d/%02d',$year,$month,$day).'، '.$date->format('H:i'))).'</span>';
+}
+add_filter('post_date_column_time','bidrubeh_admin_publication_date',100,2);
+
+function bidrubeh_post_views($post_id=0){
+  return max(0,(int)get_post_meta($post_id?:get_the_ID(),'_bd_post_views',true));
+}
+function bidrubeh_post_views_html($post_id=0){
+  return '<span class="bd-post-views"><span aria-hidden="true">'.bidrubeh_icon('eye').'</span><span>'.esc_html(bidrubeh_fa_digits(number_format_i18n(bidrubeh_post_views($post_id)))).' بازدید</span></span>';
+}
+function bidrubeh_increment_post_views($post_id){
+  global $wpdb;
+  add_post_meta($post_id,'_bd_post_views',0,true);
+  $wpdb->query($wpdb->prepare("UPDATE {$wpdb->postmeta} SET meta_value=CAST(meta_value AS UNSIGNED)+1 WHERE post_id=%d AND meta_key=%s",$post_id,'_bd_post_views'));
+  wp_cache_delete($post_id,'post_meta');
+}
+add_action('template_redirect',function(){
+  if(is_admin()||!is_singular('post')||is_preview()||is_feed()||wp_doing_ajax()||wp_is_json_request()||($_SERVER['REQUEST_METHOD']??'GET')!=='GET')return;
+  $id=get_queried_object_id();
+  if(get_post_status($id)!=='publish'||post_password_required($id)||current_user_can('edit_post',$id))return;
+  bidrubeh_increment_post_views($id);
+},30);

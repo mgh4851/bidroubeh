@@ -4,6 +4,7 @@ get_header();
 while(have_posts()): the_post();
   $bd_about_zones = bidrubeh_zones();
   $bd_about_missions = bidrubeh_missions();
+  $bd_about_info = bidrubeh_info_cards(true);
   $bd_about_phone = trim((string)get_theme_mod('bd_phone',''));
   $bd_about_email = trim((string)get_theme_mod('bd_email',''));
   $bd_about_address = trim((string)get_theme_mod('bd_address',''));
@@ -60,6 +61,25 @@ while(have_posts()): the_post();
       <article class="bd-about-zone">
         <h3><?php echo esc_html(bidrubeh_fa_digits($bd_zone['t'])); ?></h3>
         <?php if($bd_zone['d']!==''): ?><p><?php echo esc_html($bd_zone['d']); ?></p><?php endif; ?>
+      </article>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php if($bd_about_info): ?>
+<section class="section bd-about-information" aria-label="کارت‌های اطلاعاتی شهرداری">
+  <div class="wrap">
+    <div class="section-title"><div><h2>اطلاعات شهر و شهرداری</h2></div></div>
+    <div class="bd-about-info-grid">
+      <?php foreach($bd_about_info as $bd_info_index=>$bd_info): ?>
+      <article class="bd-about-info-card">
+        <div class="bd-about-info-heading"><span aria-hidden="true"><?php echo bidrubeh_icon(['bank','map','chart'][$bd_info_index%3]); ?></span><h3><?php echo esc_html($bd_info['t']); ?></h3></div>
+        <?php if($bd_info['d']!==''): ?><p><?php echo esc_html($bd_info['d']); ?></p><?php endif; ?>
+        <?php if($bd_info['n']): ?><dl class="bd-about-info-numbers">
+          <?php foreach($bd_info['n'] as $bd_info_number): ?><div><dt><?php echo esc_html($bd_info_number['l']); ?></dt><dd><?php echo esc_html(bidrubeh_fa_digits($bd_info_number['v'])); ?></dd></div><?php endforeach; ?>
+        </dl><?php endif; ?>
       </article>
       <?php endforeach; ?>
     </div>

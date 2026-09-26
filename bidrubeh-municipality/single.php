@@ -4,7 +4,7 @@
 <?php while(have_posts()): the_post(); ?>
 <article class="loop-card">
 <h2><?php the_title(); ?></h2>
-<div class="meta"><?php echo esc_html(bidrubeh_pdate('Y/m/d')); ?> | <?php the_author(); ?></div>
+<div class="meta bd-post-meta"><span><?php echo esc_html(bidrubeh_pdate('Y/m/d')); ?></span><span>نویسنده: <?php the_author(); ?></span><?php echo bidrubeh_post_views_html(); ?></div>
 <?php if(has_post_thumbnail()) the_post_thumbnail('large'); ?>
 <div><?php the_content(); ?></div>
 <div style="margin-top:12px"><?php the_tags('برچسب‌ها: ',', ',''); ?></div>
