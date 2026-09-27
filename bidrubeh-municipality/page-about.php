@@ -4,7 +4,8 @@ get_header();
 while(have_posts()): the_post();
   $bd_about_zones = bidrubeh_zones();
   $bd_about_missions = bidrubeh_missions();
-  $bd_about_info = bidrubeh_info_cards(true);
+  $bd_about_info = bidrubeh_info_cards();
+  $bd_about_gauges = bidrubeh_city_gauges();
   $bd_about_phone = trim((string)get_theme_mod('bd_phone',''));
   $bd_about_email = trim((string)get_theme_mod('bd_email',''));
   $bd_about_address = trim((string)get_theme_mod('bd_address',''));
@@ -68,10 +69,18 @@ while(have_posts()): the_post();
 </section>
 <?php endif; ?>
 
-<?php if($bd_about_info): ?>
+<?php if($bd_about_info||$bd_about_gauges): ?>
 <section class="section bd-about-information" aria-label="کارت‌های اطلاعاتی شهرداری">
   <div class="wrap">
     <div class="section-title"><div><h2>اطلاعات شهر و شهرداری</h2></div></div>
+    <?php if($bd_about_gauges): ?><div class="bd-city-gauges">
+      <?php foreach($bd_about_gauges as $bd_gauge): ?>
+      <article class="bd-city-gauge"><div class="bd-gauge-meter">
+        <svg viewBox="0 0 120 80" aria-hidden="true" focusable="false"><path class="bd-gauge-track" d="M12 70a48 48 0 0 1 96 0"/><path class="bd-gauge-value" d="M12 70a48 48 0 0 1 96 0" pathLength="100" stroke-dasharray="100" stroke-dashoffset="<?php echo esc_attr(100-$bd_gauge['value']); ?>"/></svg>
+        <strong><?php echo esc_html(bidrubeh_fa_digits(rtrim(rtrim(number_format($bd_gauge['value'],1,'.',''),'0'),'.'))); ?>٪</strong>
+      </div><h3><?php echo esc_html($bd_gauge['title']); ?></h3></article>
+      <?php endforeach; ?>
+    </div><?php endif; ?>
     <div class="bd-about-info-grid">
       <?php foreach($bd_about_info as $bd_info_index=>$bd_info): ?>
       <article class="bd-about-info-card">

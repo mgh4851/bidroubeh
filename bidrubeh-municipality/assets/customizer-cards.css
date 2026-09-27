@@ -1,0 +1,17 @@
+#sub-accordion-section-bidrubeh_info .bd-info-group{margin:0 0 12px;background:#fff;border:1px solid #d7e2d1;border-radius:12px;overflow:hidden;list-style:none}
+.bd-info-group summary{display:flex;align-items:center;flex-wrap:wrap;gap:5px 8px;padding:13px 12px;cursor:pointer;list-style:none;background:#eef4e9;color:#15513d;min-height:32px}
+.bd-info-group summary::-webkit-details-marker{display:none}
+.bd-info-group summary::after{content:'⌄';margin-inline-start:auto;font-size:20px;line-height:1;transition:transform .2s}
+.bd-info-group details[open]>summary::after{transform:rotate(180deg)}
+.bd-info-group summary:focus-visible{outline:2px solid #126b4d;outline-offset:-3px}
+.bd-info-group-title{font-size:13px;font-weight:600;max-width:100%;overflow-wrap:anywhere}
+.bd-info-group-status{font-size:10px;padding:2px 6px;border-radius:6px;background:#fff;color:#53664a}
+.bd-info-empty summary{background:#f6f6f3;color:#646970}
+#sub-accordion-section-bidrubeh_info .bd-info-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px;padding:14px 12px;margin:0}
+#sub-accordion-section-bidrubeh_info .bd-info-fields .customize-control{float:none;width:auto;margin:0;min-width:0}
+.bd-info-fields [id$='_title'],.bd-info-fields [id$='_desc']{grid-column:1/-1}
+.bd-info-fields .customize-control-title{font-size:12px;line-height:1.8;margin-bottom:5px}
+.bd-info-fields input[type=text],.bd-info-fields textarea{width:100%;min-width:0;border-color:#bfcbb9;border-radius:6px}
+.bd-info-fields textarea{min-height:74px}
+.bd-info-help{margin:0;padding:0 12px 14px;font-size:11px;line-height:1.9;color:#646970}
+@media(prefers-reduced-motion:reduce){.bd-info-group summary::after{transition:none}}

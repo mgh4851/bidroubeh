@@ -1,5 +1,6 @@
 <?php
-define('BIDRUBEH_VER','1.9.123');
+define('BIDRUBEH_VER','1.9.127');
+require_once get_template_directory().'/inc/admin.php';
 add_action('customize_controls_enqueue_scripts',function(){
   wp_add_inline_script('customize-controls',"(function(){var fa='۰۱۲۳۴۵۶۷۸۹';function toFa(s){return String(s).replace(/[0-9]/g,function(d){return fa[d];});}document.addEventListener('input',function(e){var t=e.target;if(!t||!t.id||t.tagName!=='INPUT')return;if(/bd_(slider_count|slider_speed|notice_count|photo_count|logo_w|logo_h|slogan_w|slogan_h|bar\d+_pct)/.test(t.id){var p=null;try{p=t.selectionStart;}catch(_){}var v=toFa(t.value);if(v!==t.value){t.value=v;try{if(p!==null)t.setSelectionRange(p,p);}catch(_){}}}});})();");
 });
@@ -649,34 +650,34 @@ add_action('customize_register',function($wp_customize){
     'bd_phone'=>['label'=>__('تلفن','bidrubeh'),'def'=>'061-00000000'],
     'bd_email'=>['label'=>__('ایمیل','bidrubeh'),'def'=>'info@bidrubeh.ir'],
     'bd_address'=>['label'=>__('نشانی','bidrubeh'),'def'=>'خوزستان، بیدروبه، ساختمان شهرداری مرکزی'],
-    'bd_hero_title'=>['label'=>__('تیتر هیرو','bidrubeh'),'def'=>'شهرداری بیدروبه؛ شهر مشارکت، خدمت و پیشرفت'],
-    'bd_hero_sub'=>['label'=>__('زیرتیتر هیرو','bidrubeh'),'def'=>'پرتال رسمی اطلاع‌رسانی، خدمات الکترونیک و اخبار مدیریت شهری بیدروبه'],
+    'bd_hero_title'=>['label'=>__('عنوان بخش آغازین','bidrubeh'),'def'=>'شهرداری بیدروبه؛ شهر مشارکت، خدمت و پیشرفت'],
+    'bd_hero_sub'=>['label'=>__('زیرعنوان بخش آغازین','bidrubeh'),'def'=>'پرتال رسمی اطلاع‌رسانی، خدمات الکترونیک و اخبار مدیریت شهری بیدروبه'],
     'bd_population'=>['label'=>__('جمعیت','bidrubeh'),'def'=>'۲۵٬۰۰۰+'],
     'bd_area'=>['label'=>__('وسعت شهر','bidrubeh'),'def'=>'۱۸ کیلومتر مربع'],
     'bd_hotline'=>['label'=>__('سامانه ۱۳۷','bidrubeh'),'def'=>'۱۳۷'],
     'bd_stat3_val'=>['label'=>__('آمار ۳ — عدد','bidrubeh'),'def'=>'۲۴ ساعته'],
-    'bd_stat3_label'=>['label'=>__('آمار ۳ — برچسب','bidrubeh'),'def'=>'پاسخگویی ۱۳۷'],
+    'bd_stat3_label'=>['label'=>__('آمار ۳ — عنوان آمار','bidrubeh'),'def'=>'پاسخگویی ۱۳۷'],
     'bd_stat4_val'=>['label'=>__('آمار ۴ — عدد','bidrubeh'),'def'=>'۹۰٪'],
-    'bd_stat4_label'=>['label'=>__('آمار ۴ — برچسب','bidrubeh'),'def'=>'شاخص رضایت'],
+    'bd_stat4_label'=>['label'=>__('آمار ۴ — عنوان آمار','bidrubeh'),'def'=>'شاخص رضایت'],
   ];
   foreach($fields as $key=>$f){
     $wp_customize->add_setting($key,['default'=>$f['def'],'sanitize_callback'=>'sanitize_text_field']);
     $wp_customize->add_control($key,['label'=>$f['label'],'section'=>'bidrubeh_city','type'=>'text']);
   }
   $wp_customize->add_setting('bd_notice_cat',['default'=>'etelaeieh','sanitize_callback'=>'sanitize_text_field']);
-  $wp_customize->add_control('bd_notice_cat',['label'=>__('دسته اطلاعیه‌ها (نامک)','bidrubeh'),'description'=>__('نامک دسته‌ای که اطلاعیه‌ها از آن خوانده می‌شود، مثلا etelaeieh','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text']);
+  $wp_customize->add_control('bd_notice_cat',['label'=>__('دسته اطلاعیه‌ها (نام کوتاه در نشانی)','bidrubeh'),'description'=>__('نام کوتاه دسته در نشانی‌ای که اطلاعیه‌ها از آن خوانده می‌شود، مثلا etelaeieh','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text']);
   $wp_customize->add_setting('bd_notice_count',['default'=>5,'sanitize_callback'=>'bidrubeh_sanitize_num']);
   $wp_customize->add_control('bd_notice_count',['label'=>__('تعداد اطلاعیه‌ها','bidrubeh'),'description'=>__('عدد فارسی یا انگلیسی، مثلا ۵ یا 5','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text','input_attrs'=>['inputmode'=>'numeric','placeholder'=>'۵']]);
   $wp_customize->add_setting('bd_office_hours',['default'=>'شنبه تا چهارشنبه، ۷:۳۰ تا ۱۴:۳۰','sanitize_callback'=>'sanitize_text_field']);
   $wp_customize->add_control('bd_office_hours',['label'=>__('ساعات کاری','bidrubeh'),'description'=>__('از متن فعلی صفحه درباره ما گرفته شده است؛ در صورت تغییر برنامه، اینجا را به‌روزرسانی کنید.','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text']);
   $wp_customize->add_setting('bd_slider_speed',['default'=>5,'sanitize_callback'=>'bidrubeh_sanitize_num']);
-  $wp_customize->add_control('bd_slider_speed',['label'=>__('سرعت اسلایدر (ثانیه)','bidrubeh'),'description'=>__('عدد فارسی یا انگلیسی، مثلا ۵ یا 5. صفر = توقف خودکار.','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text','input_attrs'=>['inputmode'=>'numeric','placeholder'=>'۵']]);
+  $wp_customize->add_control('bd_slider_speed',['label'=>__('سرعت نمایش چرخشی (ثانیه)','bidrubeh'),'description'=>__('عدد فارسی یا انگلیسی، مثلا ۵ یا 5. صفر = توقف خودکار.','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text','input_attrs'=>['inputmode'=>'numeric','placeholder'=>'۵']]);
   $wp_customize->add_setting('bd_photo_cat',['default'=>'gozaresh-tasviri','sanitize_callback'=>'sanitize_text_field']);
-  $wp_customize->add_control('bd_photo_cat',['label'=>__('دسته گزارش تصویری (نامک)','bidrubeh'),'description'=>__('نامک دسته گزارش‌های تصویری، مثلا gozaresh-tasviri','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text']);
+  $wp_customize->add_control('bd_photo_cat',['label'=>__('دسته گزارش تصویری (نام کوتاه در نشانی)','bidrubeh'),'description'=>__('نام کوتاه دسته در نشانی گزارش‌های تصویری، مثلا gozaresh-tasviri','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text']);
   $wp_customize->add_setting('bd_photo_count',['default'=>3,'sanitize_callback'=>'bidrubeh_sanitize_num']);
   $wp_customize->add_control('bd_photo_count',['label'=>__('تعداد گزارش تصویری','bidrubeh'),'description'=>__('عدد فارسی یا انگلیسی، مثلا ۴ یا 4','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text','input_attrs'=>['inputmode'=>'numeric','placeholder'=>'۴']]);
   $wp_customize->add_setting('bd_attract_cat',['default'=>'tourist-attractions','sanitize_callback'=>'sanitize_text_field']);
-  $wp_customize->add_control('bd_attract_cat',['label'=>__('دسته جاذبه‌های گردشگری (نامک)','bidrubeh'),'description'=>__('نامک دسته جاذبه‌ها، مثلا tourist-attractions','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text']);
+  $wp_customize->add_control('bd_attract_cat',['label'=>__('دسته جاذبه‌های گردشگری (نام کوتاه در نشانی)','bidrubeh'),'description'=>__('نام کوتاه دسته در نشانی جاذبه‌ها، مثلا tourist-attractions','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text']);
   $wp_customize->add_section('bidrubeh_social',['title'=>__('شبکه‌های اجتماعی','bidrubeh'),'priority'=>31,'description'=>__('شناسه (آیدی)، شماره موبایل یا لینک کامل را وارد کنید. خالی = عدم نمایش. مثال: bidrubeh_admin یا 09123456789 یا https://eitaa.com/bidrubeh_admin','bidrubeh')]);
   $soc=[
     'bd_eitaa'=>__('ایتا (Eitaa)','bidrubeh'),
@@ -701,7 +702,7 @@ add_action('customize_register',function($wp_customize){
     $wp_customize->add_setting('bd_zone'.$i.'_desc',['default'=>$d['d'],'sanitize_callback'=>'sanitize_text_field','transport'=>'refresh']);
     $wp_customize->add_control('bd_zone'.$i.'_desc',['label'=>sprintf(__('ناحیه %s — توضیح','bidrubeh'),bidrubeh_fa_digits($i)),'section'=>'bidrubeh_zones','type'=>'textarea']);
   }
-  $wp_customize->add_section('bidrubeh_info',['title'=>__('کارت‌های اطلاعاتی','bidrubeh'),'priority'=>33,'description'=>__('عنوان خالی = عدم نمایش آن کارت. هر کارت ۳ آمار (عدد + برچسب) دارد.','bidrubeh')]);
+  $wp_customize->add_section('bidrubeh_info',['title'=>__('کارت‌های اطلاعاتی','bidrubeh'),'priority'=>33,'description'=>__('عنوان خالی = عدم نمایش آن کارت. هر کارت ۳ آمار (عدد + عنوان آمار) دارد.','bidrubeh')]);
   $info_defs=[
     1=>['t'=>'اطلاعات شهری','d'=>'مدیریت یکپارچه خدمات، عمران محلات و نگهداشت معابر و پارک‌ها.','n'=>[['۴','ناحیه خدماتی'],['۱۲','پارک و بوستان'],['۳۰+','پروژه فعال']]],
     2=>['t'=>'فرهنگ و اجتماع','d'=>'برنامه‌های فرهنگی، ورزشی و آموزشی برای خانواده‌ها و جوانان.','n'=>[['۶','فرهنگسرا'],['۲۰+','رویداد سالانه'],['۸','زمین ورزشی']]],
@@ -719,7 +720,7 @@ add_action('customize_register',function($wp_customize){
       $wp_customize->add_setting('bd_info'.$i.'_n'.$k.'v',['default'=>$d['n'][$k-1][0],'sanitize_callback'=>'sanitize_text_field','transport'=>'refresh']);
       $wp_customize->add_control('bd_info'.$i.'_n'.$k.'v',['label'=>sprintf(__('کارت %s — آمار %s (عدد)','bidrubeh'),bidrubeh_fa_digits($i),bidrubeh_fa_digits($k)),'section'=>'bidrubeh_info','type'=>'text']);
       $wp_customize->add_setting('bd_info'.$i.'_n'.$k.'l',['default'=>$d['n'][$k-1][1],'sanitize_callback'=>'sanitize_text_field','transport'=>'refresh']);
-      $wp_customize->add_control('bd_info'.$i.'_n'.$k.'l',['label'=>sprintf(__('کارت %s — آمار %s (برچسب)','bidrubeh'),bidrubeh_fa_digits($i),bidrubeh_fa_digits($k)),'section'=>'bidrubeh_info','type'=>'text']);
+      $wp_customize->add_control('bd_info'.$i.'_n'.$k.'l',['label'=>sprintf(__('کارت %s — آمار %s (عنوان آمار)','bidrubeh'),bidrubeh_fa_digits($i),bidrubeh_fa_digits($k)),'section'=>'bidrubeh_info','type'=>'text']);
     }
   }
   $wp_customize->add_section('bidrubeh_faq',['title'=>__('سوالات متداول','bidrubeh'),'priority'=>34,'description'=>__('سوال خالی = عدم نمایش آن مورد. روی سوال در سایت کلیک کنید تا پاسخ باز شود.','bidrubeh')]);
@@ -747,9 +748,9 @@ add_action('customize_register',function($wp_customize){
   $wp_customize->add_section('bidrubeh_about',['title'=>__('صفحه درباره ما','bidrubeh'),'priority'=>36,'description'=>__('عنوان خالی = عدم نمایش آن مورد.','bidrubeh')]);
   $anum=[
     'bd_about_num3_val'=>['label'=>__('آمار ۳ — عدد','bidrubeh'),'def'=>'۱۲'],
-    'bd_about_num3_label'=>['label'=>__('آمار ۳ — برچسب','bidrubeh'),'def'=>'پارک و بوستان'],
+    'bd_about_num3_label'=>['label'=>__('آمار ۳ — عنوان آمار','bidrubeh'),'def'=>'پارک و بوستان'],
     'bd_about_num4_val'=>['label'=>__('آمار ۴ — عدد','bidrubeh'),'def'=>'۳۰+'],
-    'bd_about_num4_label'=>['label'=>__('آمار ۴ — برچسب','bidrubeh'),'def'=>'پروژه فعال'],
+    'bd_about_num4_label'=>['label'=>__('آمار ۴ — عنوان آمار','bidrubeh'),'def'=>'پروژه فعال'],
   ];
   foreach($anum as $key=>$f){
     $wp_customize->add_setting($key,['default'=>$f['def'],'sanitize_callback'=>'sanitize_text_field','transport'=>'refresh']);
@@ -948,10 +949,10 @@ function bidrubeh_photo_query_args(){
   return $args;
 }
 add_action('add_meta_boxes',function(){
-  add_meta_box('bidrubeh_slider',__('اسلایدر صفحه اصلی','bidrubeh'),function($post){
+  add_meta_box('bidrubeh_slider',__('نمایش چرخشی صفحه اصلی','bidrubeh'),function($post){
     wp_nonce_field('bidrubeh_slider_meta','bidrubeh_slider_nonce');
     $v=get_post_meta($post->ID,'bd_in_slider',true);
-    echo '<label><input type="checkbox" name="bd_in_slider" value="1"'.checked($v,'1',false).'> '.esc_html__('نمایش این خبر در اسلایدر','bidrubeh').'</label>';
+    echo '<label><input type="checkbox" name="bd_in_slider" value="1"'.checked($v,'1',false).'> '.esc_html__('نمایش این خبر در نمایش چرخشی','bidrubeh').'</label>';
   },'post','side','default');
 });
 add_action('save_post_post',function($post_id){
@@ -964,9 +965,9 @@ add_action('save_post_post',function($post_id){
 add_action('restrict_manage_posts',function($post_type,$which){
   if($post_type!=='post'||$which!=='top') return;
   $sel=isset($_GET['bd_slider'])?sanitize_key($_GET['bd_slider']):'';
-  echo '<select name="bd_slider"><option value="">'.esc_html__('همه — اسلایدر','bidrubeh').'</option>';
-  echo '<option value="yes"'.selected($sel,'yes',false).'>'.esc_html__('در اسلایدر','bidrubeh').'</option>';
-  echo '<option value="no"'.selected($sel,'no',false).'>'.esc_html__('خارج از اسلایدر','bidrubeh').'</option></select>';
+  echo '<select name="bd_slider"><option value="">'.esc_html__('همه — نمایش چرخشی','bidrubeh').'</option>';
+  echo '<option value="yes"'.selected($sel,'yes',false).'>'.esc_html__('در نمایش چرخشی','bidrubeh').'</option>';
+  echo '<option value="no"'.selected($sel,'no',false).'>'.esc_html__('خارج از نمایش چرخشی','bidrubeh').'</option></select>';
 },10,2);
 add_action('pre_get_posts',function($q){
   if(!is_admin()||!$q->is_main_query()) return;
@@ -983,9 +984,9 @@ add_action('pre_get_posts',function($q){
   $q->set('meta_query',$mq);
 });
 add_filter('manage_post_posts_columns',function($cols){
-  $cols['bd_slider']=__('اسلایدر','bidrubeh');
+  $cols['bd_slider']=__('نمایش چرخشی','bidrubeh');
   $cols['bd_comments']=__('دیدگاه‌ها','bidrubeh');
-  $cols['bd_pings']=__('بازتاب‌ها','bidrubeh');
+  $cols['bd_pings']=__('اعلان پیوند سایت‌های دیگر','bidrubeh');
   return $cols;
 });
 add_action('manage_post_posts_custom_column',function($col,$id){
@@ -1253,3 +1254,30 @@ add_action('template_redirect',function(){
   if(get_post_status($id)!=='publish'||post_password_required($id)||current_user_can('edit_post',$id))return;
   bidrubeh_increment_post_views($id);
 },30);
+
+function bidrubeh_percentage($raw){
+  $number=str_replace(['٪','%','٫'],['','','.'],bidrubeh_fa_to_en(trim((string)$raw)));
+  return is_numeric($number)?round(max(0,min(100,(float)$number)),1):0;
+}
+function bidrubeh_city_gauge_defaults(){
+  return [['title'=>'شهرنشینی','value'=>46],['title'=>'رشد جمعیت','value'=>1],['title'=>'آلودگی در سال','value'=>19],['title'=>'باسوادی','value'=>90]];
+}
+function bidrubeh_city_gauges(){
+  $gauges=[];
+  foreach(bidrubeh_city_gauge_defaults() as $index=>$default){
+    $number=$index+1;$title=trim((string)get_theme_mod('bd_gauge_'.$number.'_title',$default['title']));
+    if($title==='')continue;
+    $gauges[]=['title'=>$title,'value'=>bidrubeh_percentage(get_theme_mod('bd_gauge_'.$number.'_value',$default['value']))];
+  }
+  return $gauges;
+}
+add_action('customize_register',function($customizer){
+  $customizer->add_section('bd_city_gauges',['title'=>'درصدهای شهر','priority'=>33,'description'=>'چهار نمودار درصدی در صفحه درباره ما، بالای کارت‌های اطلاعاتی نمایش داده می‌شوند. درصد بین صفر و صد است؛ عنوان خالی، نمودار را مخفی می‌کند.']);
+  foreach(bidrubeh_city_gauge_defaults() as $index=>$default){
+    $number=$index+1;
+    $customizer->add_setting('bd_gauge_'.$number.'_title',['default'=>$default['title'],'sanitize_callback'=>'sanitize_text_field','transport'=>'refresh']);
+    $customizer->add_control('bd_gauge_'.$number.'_title',['label'=>'عنوان نمودار '.bidrubeh_fa_digits($number),'section'=>'bd_city_gauges','type'=>'text']);
+    $customizer->add_setting('bd_gauge_'.$number.'_value',['default'=>$default['value'],'sanitize_callback'=>'bidrubeh_percentage','transport'=>'refresh']);
+    $customizer->add_control('bd_gauge_'.$number.'_value',['label'=>'درصد '.bidrubeh_fa_digits($number),'description'=>'عدد فارسی یا انگلیسی، از ۰ تا ۱۰۰.','section'=>'bd_city_gauges','type'=>'text','input_attrs'=>['inputmode'=>'decimal']]);
+  }
+});
