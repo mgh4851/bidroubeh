@@ -4,7 +4,7 @@ Theme URI: https://example.ir/bidrubeh
 Author: Bidrubeh IT
 Author URI: https://example.ir
 Description: پرتال رسمی شهرداری بیدروبه؛ راست‌چین و فارسی برای اطلاع‌رسانی، ارتباط شهروندان و معرفی شهر.
-Version: 1.9.127
+Version: 1.9.128
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: bidrubeh
@@ -832,3 +832,15 @@ body.admin-bar{padding-top:62px}
 .bd-gauge-meter strong{position:absolute;bottom:10px;left:0;right:0;text-align:center;color:var(--bd-primary-2);font-size:27px;font-weight:700;line-height:1.4}
 .bd-city-gauge h3{margin:8px 0 0;font-size:14px;color:var(--bd-primary-2);line-height:1.7;text-align:center}
 @media(max-width:720px){.bd-city-gauges{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.bd-city-gauge{padding:14px 10px}.bd-gauge-meter strong{font-size:24px}.bd-city-gauge h3{font-size:13px}}
+
+/* City illustration. */
+.bd-city-story-art{background:linear-gradient(145deg,#e8d6b8,#f1e6d2);padding:18px}
+.bd-city-story-art svg{display:block;width:100%;height:160px;flex-shrink:0;color:#436e59;transform:translateY(-28px)}
+.bd-city-story-art small{font-size:13px;text-align:center;color:#fff}
+@media(max-width:720px){.bd-city-story-art svg{height:130px}}
+
+/* Color accents limited to the gauge arcs. */
+.bd-city-gauge:nth-child(4n+1) .bd-gauge-value{stroke:#10b981}
+.bd-city-gauge:nth-child(4n+2) .bd-gauge-value{stroke:#0ea5e9}
+.bd-city-gauge:nth-child(4n+3) .bd-gauge-value{stroke:#f59e0b}
+.bd-city-gauge:nth-child(4n) .bd-gauge-value{stroke:#8b5cf6}

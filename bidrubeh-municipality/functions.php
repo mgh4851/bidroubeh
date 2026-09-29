@@ -1,5 +1,5 @@
 <?php
-define('BIDRUBEH_VER','1.9.127');
+define('BIDRUBEH_VER','1.9.128');
 require_once get_template_directory().'/inc/admin.php';
 add_action('customize_controls_enqueue_scripts',function(){
   wp_add_inline_script('customize-controls',"(function(){var fa='۰۱۲۳۴۵۶۷۸۹';function toFa(s){return String(s).replace(/[0-9]/g,function(d){return fa[d];});}document.addEventListener('input',function(e){var t=e.target;if(!t||!t.id||t.tagName!=='INPUT')return;if(/bd_(slider_count|slider_speed|notice_count|photo_count|logo_w|logo_h|slogan_w|slogan_h|bar\d+_pct)/.test(t.id){var p=null;try{p=t.selectionStart;}catch(_){}var v=toFa(t.value);if(v!==t.value){t.value=v;try{if(p!==null)t.setSelectionRange(p,p);}catch(_){}}}});})();");
@@ -626,7 +626,9 @@ add_action('widgets_init',function(){
   register_sidebar(['name'=>__('فوتر ۲','bidrubeh'),'id'=>'footer-2','before_widget'=>'<div>','after_widget'=>'</div>','before_title'=>'<h4>','after_title'=>'</h4>']);
 });
 add_action('wp_enqueue_scripts',function(){
-  wp_enqueue_style('bidrubeh-style',get_stylesheet_uri(),[],BIDRUBEH_VER);
+  $bd_style_path=get_stylesheet_directory().'/style.css';
+  $bd_style_version=is_file($bd_style_path)?BIDRUBEH_VER.'.'.filemtime($bd_style_path):BIDRUBEH_VER;
+  wp_enqueue_style('bidrubeh-style',get_stylesheet_uri(),[],$bd_style_version);
   wp_enqueue_script('bidrubeh-main',get_template_directory_uri().'/js/main.js',[],BIDRUBEH_VER,true);
 });
 add_action('customize_register',function($wp_customize){

@@ -144,7 +144,7 @@ $bd_mini_news = get_posts($bd_mini_news_args);
       <p>بیدروبه با محله‌ها، مردم و چشم‌اندازهای خود هویت ویژه‌ای دارد. این بخش دریچه‌ای برای آشنایی با شهر و فعالیت‌های شهرداری است.</p>
       <a class="bd-text-link" href="<?php echo esc_url($bd_about_url); ?>">درباره بیدروبه <span aria-hidden="true">←</span></a>
     </div>
-    <div class="bd-city-story-art" aria-hidden="true"><span>بیدروبه</span><small>شهر ما، خانه ما</small></div>
+    <div class="bd-city-story-art" aria-hidden="true"><svg viewBox="0 0 500 170" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 124 54 79 91 101 159 39 206 80 252 54 318 112 362 70 433 108 500 78" stroke="currentColor" stroke-width="2" opacity=".2"/><circle cx="387" cy="39" r="23" fill="#b46b42" opacity=".4"/><g stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M16 149h468M67 149v-50l30-22 30 22v50M76 101h42M90 149v-28h16v28M187 149V93h66v56M180 93l40-24 40 24M209 149v-26h22v26M195 104h9m10 0h10m10 0h10M296 149v-40h58v40M290 109l35-19 35 19M309 149v-21h29v21M420 149V94M420 118c-32-4-27-43 0-46 27 3 32 42 0 46Z"/><path d="M46 149v-22m-12 3 12-14 12 14M154 149v-16m-9 0 9-12 9 12M380 149v-20m-11 0 11-14 11 14"/></g></svg><small>بیدروبه؛ شهر ما، خانهٔ ما</small></div>
   </div>
 </section>
 
