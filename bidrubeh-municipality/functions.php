@@ -1,5 +1,5 @@
 <?php
-define('BIDRUBEH_VER','1.9.128');
+define('BIDRUBEH_VER','1.9.129');
 require_once get_template_directory().'/inc/admin.php';
 add_action('customize_controls_enqueue_scripts',function(){
   wp_add_inline_script('customize-controls',"(function(){var fa='۰۱۲۳۴۵۶۷۸۹';function toFa(s){return String(s).replace(/[0-9]/g,function(d){return fa[d];});}document.addEventListener('input',function(e){var t=e.target;if(!t||!t.id||t.tagName!=='INPUT')return;if(/bd_(slider_count|slider_speed|notice_count|photo_count|logo_w|logo_h|slogan_w|slogan_h|bar\d+_pct)/.test(t.id){var p=null;try{p=t.selectionStart;}catch(_){}var v=toFa(t.value);if(v!==t.value){t.value=v;try{if(p!==null)t.setSelectionRange(p,p);}catch(_){}}}});})();");
@@ -680,6 +680,8 @@ add_action('customize_register',function($wp_customize){
   $wp_customize->add_control('bd_photo_count',['label'=>__('تعداد گزارش تصویری','bidrubeh'),'description'=>__('عدد فارسی یا انگلیسی، مثلا ۴ یا 4','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text','input_attrs'=>['inputmode'=>'numeric','placeholder'=>'۴']]);
   $wp_customize->add_setting('bd_attract_cat',['default'=>'tourist-attractions','sanitize_callback'=>'sanitize_text_field']);
   $wp_customize->add_control('bd_attract_cat',['label'=>__('دسته جاذبه‌های گردشگری (نام کوتاه در نشانی)','bidrubeh'),'description'=>__('نام کوتاه دسته در نشانی جاذبه‌ها، مثلا tourist-attractions','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text']);
+  $wp_customize->add_setting('bd_martyrs_cat',['default'=>'shohadaye-bidrubeh','sanitize_callback'=>'sanitize_text_field']);
+  $wp_customize->add_control('bd_martyrs_cat',['label'=>__('دسته شهدای بیدروبه (نام کوتاه در نشانی)','bidrubeh'),'description'=>__('نام کوتاه دسته در نشانی مطالب شهدا، مثلا shohadaye-bidrubeh','bidrubeh'),'section'=>'bidrubeh_city','type'=>'text']);
   $wp_customize->add_section('bidrubeh_social',['title'=>__('شبکه‌های اجتماعی','bidrubeh'),'priority'=>31,'description'=>__('شناسه (آیدی)، شماره موبایل یا لینک کامل را وارد کنید. خالی = عدم نمایش. مثال: bidrubeh_admin یا 09123456789 یا https://eitaa.com/bidrubeh_admin','bidrubeh')]);
   $soc=[
     'bd_eitaa'=>__('ایتا (Eitaa)','bidrubeh'),
@@ -1023,6 +1025,8 @@ function bidrubeh_latest_news_exclude(){
   }
   $tt=bidrubeh_tourism_term();
   if($tt) $ex[]=(int)$tt->term_id;
+  $mt=bidrubeh_martyrs_term();
+  if($mt) $ex[]=(int)$mt->term_id;
   return $ex;
 }
 function bidrubeh_home_news_args($count){
@@ -1062,6 +1066,21 @@ function bidrubeh_tourism_term(){
   if($slug!==''){ $t=get_category_by_slug($slug); if($t) return $t; }
   return null;
 }
+function bidrubeh_martyrs_term(){
+  $slug=trim((string)get_theme_mod('bd_martyrs_cat','shohadaye-bidrubeh'));
+  if($slug!==''){
+    $term=get_category_by_slug($slug);
+    if($term) return $term;
+  }
+  $term=get_term_by('name','شهدای بیدروبه','category');
+  return $term&&!is_wp_error($term)?$term:null;
+}
+add_action('init',function(){
+  if(bidrubeh_martyrs_term()) return;
+  $slug=trim((string)get_theme_mod('bd_martyrs_cat','shohadaye-bidrubeh'));
+  if($slug==='') $slug='shohadaye-bidrubeh';
+  wp_insert_term('شهدای بیدروبه','category',['slug'=>sanitize_title($slug)]);
+});
 function bidrubeh_tourism_query_args(){
   $t=bidrubeh_tourism_term();
   $args=['posts_per_page'=>-1,'post_type'=>'post','post_status'=>'publish','ignore_sticky_posts'=>1,'no_found_rows'=>true,'orderby'=>'date','order'=>'DESC'];
@@ -1069,13 +1088,19 @@ function bidrubeh_tourism_query_args(){
   return $args;
 }
 function bidrubeh_tourism_cards(){
-  if(!bidrubeh_tourism_term()) return '';
-  $args=bidrubeh_tourism_query_args();
+  return bidrubeh_category_cards(bidrubeh_tourism_term(),'bdTourGrid');
+}
+function bidrubeh_martyrs_cards(){
+  return bidrubeh_category_cards(bidrubeh_martyrs_term(),'bdMartyrsGrid');
+}
+function bidrubeh_category_cards($term,$id){
+  if(!$term) return '';
+  $args=['posts_per_page'=>-1,'post_type'=>'post','post_status'=>'publish','ignore_sticky_posts'=>1,'no_found_rows'=>true,'orderby'=>'date','order'=>'DESC','cat'=>(int)$term->term_id];
   $q=new WP_Query($args);
   if(!$q->have_posts()) return '';
   $posts=array_values($q->posts);
   shuffle($posts);
-  $out='<div class="bd-tour-grid" id="bdTourGrid" dir="rtl" data-speed="'.(int)bidrubeh_slider_speed().'">';
+  $out='<div class="bd-tour-grid" id="'.esc_attr($id).'" dir="rtl" data-speed="'.(int)bidrubeh_slider_speed().'">';
   foreach($posts as $i=>$p){
     $link=get_permalink($p);
     $title=get_the_title($p);
@@ -1090,8 +1115,8 @@ function bidrubeh_tourism_cards(){
 }
 add_shortcode('tourism_gallery',function(){ return bidrubeh_tourism_cards(); });
 add_filter('widget_posts_args',function($args){
-  $tt=function_exists('bidrubeh_tourism_term')?bidrubeh_tourism_term():null;
-  if($tt){
+  foreach([bidrubeh_tourism_term(),bidrubeh_martyrs_term()] as $tt){
+    if(!$tt) continue;
     $ex=isset($args['category__not_in'])?(array)$args['category__not_in']:[];
     $ex[]=(int)$tt->term_id;
     $args['category__not_in']=array_values(array_unique($ex));
@@ -1144,7 +1169,9 @@ add_filter('widget_display_callback',function($instance,$widget,$args){
   if($title!=='') echo $args['before_title'].apply_filters('widget_title',$title).$args['after_title'];
   $targs=['posts_per_page'=>$number,'ignore_sticky_posts'=>1,'no_found_rows'=>true,'post_status'=>'publish'];
   $tt=bidrubeh_tourism_term();
-  if($tt) $targs['category__not_in']=[(int)$tt->term_id];
+  $mt=bidrubeh_martyrs_term();
+  $excluded=array_values(array_map(function($term){return (int)$term->term_id;},array_filter([$tt,$mt])));
+  if($excluded) $targs['category__not_in']=$excluded;
   $q=new WP_Query($targs);
   if($q->have_posts()){
     echo '<ul class="bd-recent-list">';

@@ -95,8 +95,7 @@ document.addEventListener('DOMContentLoaded',function(){
   }
   initMiniSlider('bdNoticeSlider');
   initMiniSlider('bdNewsSlider');
-  (function initTourism(){
-    var grid=document.getElementById('bdTourGrid');
+  function initCardRotation(grid){
     if(!grid)return;
     var cards=Array.prototype.slice.call(grid.querySelectorAll('.bd-tour-item'));
     var speed=parseInt(grid.getAttribute('data-speed')||'0',10);
@@ -127,7 +126,10 @@ document.addEventListener('DOMContentLoaded',function(){
       },740);
     }
     if(!reduced)setInterval(rotate,speed*1000);
-  })();
+  }
+  ['bdTourGrid','bdMartyrsGrid'].forEach(function(id){
+    initCardRotation(document.getElementById(id));
+  });
   document.querySelectorAll('.sidebar .widget_categories').forEach(function(widget){
     var heading=widget.querySelector('h2,h3,.widget-title');
     if(!heading||widget.querySelector('details'))return;

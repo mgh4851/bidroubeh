@@ -120,7 +120,15 @@ $bd_mini_news = get_posts($bd_mini_news_args);
 </section>
 <?php endif; ?>
 
-<section class="section bd-section-soft" id="news">
+<?php $bd_martyrs=bidrubeh_martyrs_cards(); $bd_martyrs_term=bidrubeh_martyrs_term(); ?>
+<section class="section bd-section-soft" id="martyrs">
+  <div class="wrap">
+    <div class="section-title"><div><h2>شهدای بیدروبه</h2></div><?php if($bd_martyrs_term): ?><a class="bd-text-link" href="<?php echo esc_url(get_category_link($bd_martyrs_term)); ?>">همه شهدا ←</a><?php endif; ?></div>
+    <?php echo $bd_martyrs!==''?$bd_martyrs:'<p class="bd-empty">هنوز مطلبی درباره شهدای بیدروبه منتشر نشده است.</p>'; ?>
+  </div>
+</section>
+
+<section class="section" id="news">
   <div class="wrap">
     <div class="section-title"><div><h2>آخرین اخبار</h2></div><a class="bd-text-link" href="<?php echo esc_url($bd_news_archive_url); ?>">همه خبرها ←</a></div>
     <?php $bd_news_q=new WP_Query(bidrubeh_home_news_args(3)); ?>

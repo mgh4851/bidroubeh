@@ -5,7 +5,7 @@ function bidrubeh_admin_content_links(){
   $news=get_category_by_slug('akhbar');
   $notice=get_category_by_slug(trim((string)get_theme_mod('bd_notice_cat','etelaeieh')));
   $photo=get_category_by_slug(trim((string)get_theme_mod('bd_photo_cat','gozaresh-tasviri')));
-  return ['خبر جدید'=>$news,'اطلاعیه جدید'=>$notice,'گزارش تصویری جدید'=>$photo,'جاذبه جدید'=>bidrubeh_tourism_term()];
+  return ['خبر جدید'=>$news,'اطلاعیه جدید'=>$notice,'گزارش تصویری جدید'=>$photo,'جاذبه جدید'=>bidrubeh_tourism_term(),'شهید جدید'=>bidrubeh_martyrs_term()];
 }
 add_filter('option_default_category',function($category){
   global $pagenow;
