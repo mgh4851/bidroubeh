@@ -3,7 +3,7 @@
 <div class="bd-single-main">
 <?php while(have_posts()): the_post(); ?>
 <article class="loop-card">
-<h2><?php the_title(); ?></h2>
+<h1><?php the_title(); ?></h1>
 <div class="meta bd-post-meta"><span><?php echo esc_html(bidrubeh_pdate('Y/m/d')); ?></span><span>نویسنده: <?php the_author(); ?></span><?php echo bidrubeh_post_views_html(); ?></div>
 <?php if(has_post_thumbnail()) the_post_thumbnail('large'); ?>
 <div class="bd-post-content"><?php the_content(); ?></div>
