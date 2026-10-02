@@ -1,5 +1,5 @@
 <?php
-define('BIDRUBEH_VER','1.9.130');
+define('BIDRUBEH_VER','1.9.136');
 require_once get_template_directory().'/inc/admin.php';
 require_once get_template_directory().'/inc/seo.php';
 add_action('customize_controls_enqueue_scripts',function(){
@@ -631,7 +631,20 @@ add_action('wp_enqueue_scripts',function(){
   $bd_style_version=is_file($bd_style_path)?BIDRUBEH_VER.'.'.filemtime($bd_style_path):BIDRUBEH_VER;
   wp_enqueue_style('bidrubeh-style',get_stylesheet_uri(),[],$bd_style_version);
   wp_enqueue_script('bidrubeh-main',get_template_directory_uri().'/js/main.js',[],BIDRUBEH_VER,true);
+  if(is_singular('post')) wp_enqueue_script('bidrubeh-post-lightbox',get_template_directory_uri().'/js/post-lightbox.js',[],BIDRUBEH_VER,true);
 });
+add_filter('the_content',function($content){
+  if(!is_singular('post')||!in_the_loop()||!is_main_query()||!class_exists('WP_HTML_Tag_Processor')) return $content;
+  $html=new WP_HTML_Tag_Processor($content);
+  while($html->next_tag('img')){
+    if(!preg_match('/\bwp-image-(\d+)\b/',(string)$html->get_attribute('class'),$match)) continue;
+    $full=wp_get_attachment_image_url((int)$match[1],'full');
+    $src=(string)$html->get_attribute('src');
+    $stem=function($url){return preg_replace('/-(?:\d+x\d+|scaled)(?=\.[^.]+$)/','',wp_basename((string)wp_parse_url($url,PHP_URL_PATH)));};
+    if($full&&$stem($src)===$stem($full)) $html->set_attribute('data-bd-full',$full);
+  }
+  return $html->get_updated_html();
+},20);
 add_action('customize_register',function($wp_customize){
   $wp_customize->add_section('bidrubeh_brand',['title'=>__('لوگوی سایت','bidrubeh'),'priority'=>29,'description'=>__('تصویر دلخواه لوگو را بارگذاری کنید و ابعاد نمایشی آن را تنظیم کنید. خالی = نمایش نشان پیش‌فرض.','bidrubeh')]);
   $wp_customize->add_setting('bd_logo',['default'=>'','sanitize_callback'=>'bidrubeh_sanitize_logo','transport'=>'refresh']);

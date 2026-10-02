@@ -5,7 +5,9 @@
 <article class="loop-card">
 <h1><?php the_title(); ?></h1>
 <div class="meta bd-post-meta"><span><?php echo esc_html(bidrubeh_pdate('Y/m/d')); ?></span><span>نویسنده: <?php the_author(); ?></span><?php echo bidrubeh_post_views_html(); ?></div>
-<?php if(has_post_thumbnail()) the_post_thumbnail('large'); ?>
+<?php if(has_post_thumbnail()): ?>
+<button class="bd-post-featured" type="button" data-bd-full="<?php echo esc_url(get_the_post_thumbnail_url(get_the_ID(),'full')); ?>" aria-label="نمایش تصویر شاخص در اندازه بزرگ"><?php the_post_thumbnail('large'); ?></button>
+<?php endif; ?>
 <div class="bd-post-content"><?php the_content(); ?></div>
 <div style="margin-top:12px"><?php the_tags('برچسب‌ها: ',', ',''); ?></div>
 <?php $rel=bidrubeh_related_posts(get_the_ID(),3); if(!empty($rel)): ?>

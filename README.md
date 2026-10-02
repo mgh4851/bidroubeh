@@ -10,7 +10,7 @@ Upload `bidrubeh-municipality.zip` from the repository root in WordPress under
 **Appearance > Themes > Add New > Upload Theme**.
 
 The ZIP contains one top-level directory named `bidrubeh-municipality`, as
-required by WordPress. Its current theme version is `1.9.130`.
+required by WordPress. Its current theme version is `1.9.136`.
 
 ## Rebuild the theme ZIP
 

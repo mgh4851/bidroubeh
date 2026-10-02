@@ -4,7 +4,7 @@ Theme URI: https://example.ir/bidrubeh
 Author: Bidrubeh IT
 Author URI: https://example.ir
 Description: پرتال رسمی شهرداری بیدروبه؛ راست‌چین و فارسی برای اطلاع‌رسانی، ارتباط شهروندان و معرفی شهر.
-Version: 1.9.130
+Version: 1.9.136
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: bidrubeh
@@ -50,6 +50,33 @@ a{color:var(--bd-primary);text-decoration:none}
 a:hover{color:var(--bd-primary-2)}
 img{max-width:100%;height:auto}
 .bd-post-content img{border-radius:8px}
+.bd-post-featured{display:block;width:100%;margin:18px 0;padding:0;border:0;background:none;cursor:zoom-in;text-align:inherit}
+.bd-post-featured img{display:block;width:auto;max-width:100%;height:auto;border-radius:12px}
+.bd-post-featured:focus-visible,.bd-post-content img[role="button"]:focus-visible{outline:3px solid var(--bd-accent);outline-offset:4px}
+.bd-post-content img[data-bd-zoomable]{cursor:zoom-in}
+.bd-post-content .wp-block-gallery.has-nested-images,.bd-post-content .gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+.bd-post-content .wp-block-gallery.has-nested-images figure.wp-block-image,.bd-post-content .gallery .gallery-item{width:100%;min-width:0;margin:0}
+.bd-post-content .wp-block-gallery.has-nested-images figure.wp-block-image img,.bd-post-content .gallery .gallery-item img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.bd-post-content .bd-inline-image-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start;margin:16px 0}
+.bd-post-content .bd-inline-image-row-two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.bd-post-content .bd-inline-image-row>p,.bd-post-content .bd-inline-image-row>figure{min-width:0;margin:0}
+.bd-post-content .bd-inline-image-row img{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:1;object-fit:cover;float:none!important;margin:0!important}
+@media(max-width:640px){.bd-post-content .wp-block-gallery.has-nested-images,.bd-post-content .gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.bd-post-content .bd-inline-image-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.bd-post-lightbox{position:fixed;inset:0;width:auto;max-width:none;height:100dvh;max-height:none;margin:0;padding:20px 62px;border:0;background:rgba(7,23,19,.94);color:#fff;overflow:hidden}
+.bd-post-lightbox::backdrop{background:rgba(7,23,19,.94)}
+.bd-post-lightbox[open]{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.bd-post-lightbox img{display:block;max-width:100%;max-height:calc(100dvh - 100px);width:auto;height:auto;object-fit:contain}
+.bd-post-lightbox .bd-lightbox-caption{max-width:90%;margin:0;font-size:13px;text-align:center}
+.bd-post-lightbox button{position:absolute;border:0;border-radius:50%;width:40px;height:40px;background:rgba(255,255,255,.18);color:#fff;font:26px/1 Arial,sans-serif;cursor:pointer}
+.bd-post-lightbox .bd-lightbox-chevron{display:block;width:17px;height:22px;margin:auto;background:currentColor}
+.bd-post-lightbox .bd-lightbox-next .bd-lightbox-chevron{clip-path:polygon(0 0,30% 0,100% 50%,30% 100%,0 100%,70% 50%)}
+.bd-post-lightbox .bd-lightbox-prev .bd-lightbox-chevron{clip-path:polygon(100% 0,70% 0,0 50%,70% 100%,100% 100%,30% 50%)}
+.bd-post-lightbox button:hover,.bd-post-lightbox button:focus-visible{background:rgba(255,255,255,.32)}
+.bd-post-lightbox .bd-lightbox-close{top:14px;left:14px}
+.bd-post-lightbox .bd-lightbox-next{right:12px;top:50%;transform:translateY(-50%)}
+.bd-post-lightbox .bd-lightbox-prev{left:12px;top:50%;transform:translateY(-50%)}
+@media(max-width:560px){.bd-post-lightbox{padding:50px 44px}.bd-post-lightbox img{max-height:calc(100dvh - 130px)}}
 .container,.wrap{width:min(1200px,94%);margin:0 auto}
 
 /* Merged topbar+header — header blends with site background */
