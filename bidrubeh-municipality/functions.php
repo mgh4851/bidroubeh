@@ -1,5 +1,5 @@
 <?php
-define('BIDRUBEH_VER','1.9.136');
+define('BIDRUBEH_VER','1.9.138');
 require_once get_template_directory().'/inc/admin.php';
 require_once get_template_directory().'/inc/seo.php';
 add_action('customize_controls_enqueue_scripts',function(){

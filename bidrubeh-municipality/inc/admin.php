@@ -53,12 +53,48 @@ add_action('admin_menu',function(){
 });
 add_filter('manage_post_posts_columns',function($columns){
   $result=[];
-  foreach($columns as $key=>$label){$result[$key]=$label;if($key==='cb')$result['bd_thumbnail']='عکس شاخص';}
+  foreach($columns as $key=>$label){
+    if($key==='date')continue;
+    $result[$key]=$label;
+    if($key==='cb')$result['bd_thumbnail']='عکس شاخص';
+    if($key==='title'){
+      $result['bd_actions']='عملیات';
+      $result['bd_last_status']='آخرین وضعیت';
+    }
+  }
   $result['bd_views']='تعداد بازدید';return $result;
 },20);
+add_filter('post_row_actions',function($actions,$post){
+  $screen=get_current_screen();
+  if(!$screen||$screen->id!=='edit-post')return $actions;
+  $GLOBALS['bd_post_row_actions'][$post->ID]=$actions;
+  return [];
+},PHP_INT_MAX,2);
 add_action('manage_post_posts_custom_column',function($column,$id){
   if($column==='bd_thumbnail')echo has_post_thumbnail($id)?get_the_post_thumbnail($id,[56,42],['class'=>'bd-admin-thumb','alt'=>'']):'<span class="bd-admin-muted">بدون عکس</span>';
   if($column==='bd_views')echo esc_html(bidrubeh_fa_digits(number_format_i18n(bidrubeh_post_views($id))));
+  if($column==='bd_actions'){
+    $actions=$GLOBALS['bd_post_row_actions'][$id]??[];
+    if($actions){
+      echo '<div class="row-actions bd-post-row-actions">';
+      foreach($actions as $key=>$action)echo '<span class="'.esc_attr(sanitize_html_class($key)).'">'.$action.'</span>';
+      echo '</div>';
+      unset($GLOBALS['bd_post_row_actions'][$id]);
+    }
+  }
+  if($column==='bd_last_status'){
+    $post=get_post($id);
+    if(!$post)return;
+    $status=get_post_status_object($post->post_status);
+    echo '<strong class="bd-post-status bd-post-status-'.esc_attr(sanitize_html_class($post->post_status)).'">'.esc_html($status?$status->label:$post->post_status).'</strong>';
+    if($post->post_modified&&$post->post_modified!=='0000-00-00 00:00:00'){
+      $date=DateTimeImmutable::createFromFormat('!Y-m-d H:i:s',$post->post_modified,wp_timezone());
+      if($date){
+        [$year,$month,$day]=bidrubeh_g2j((int)$date->format('Y'),(int)$date->format('n'),(int)$date->format('j'));
+        echo '<small class="bd-post-status-date">آخرین ویرایش: <span dir="ltr">'.esc_html(bidrubeh_fa_digits(sprintf('%04d/%02d/%02d',$year,$month,$day).' '.$date->format('H:i'))).'</span></small>';
+      }
+    }
+  }
 },10,2);
 function bidrubeh_message_states(){return ['new'=>'بررسی نشده','reviewing'=>'در حال بررسی','resolved'=>'رسیدگی شده'];}
 add_filter('manage_bidrubeh_msg_posts_columns',function($columns){$columns['bd_tracking']='پیگیری';return $columns;});
